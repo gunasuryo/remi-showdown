@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b6xn0tr8so5aw"
-path="res://.godot/imported/JokerRed.svg-08d90afca8aab65dfaf1c3f169f1a577.ctex"
+uid="uid://b2ydhbjni17v7"
+path="res://.godot/imported/JokerBlack.png-a5de95da2abaadba1593bff1c44c592e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Asset/JokerRed.svg"
-dest_files=["res://.godot/imported/JokerRed.svg-08d90afca8aab65dfaf1c3f169f1a577.ctex"]
+source_file="res://Asset/JokerBlack.png"
+dest_files=["res://.godot/imported/JokerBlack.png-a5de95da2abaadba1593bff1c44c592e.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

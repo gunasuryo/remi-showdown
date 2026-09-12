@@ -108,12 +108,12 @@ func _ensure_styles() -> void:
 	bar.add_theme_stylebox_override("background", _hp_bg_sb)
 	bar.add_theme_stylebox_override("fill", _hp_fill_sb)
 
-# There is no Joker artwork; face-up mode already borrows the King's and flips
-# it, so face-down follows the same convention rather than inventing one.
+# Every card now has its own art. The Joker used to have none: both modes drew
+# the King's texture upside down, which is why this took a `face` substitution
+# and the renderer flipped the Joker vertically.
 static func art_for(card_name: String, side: int) -> Texture2D:
-	var face: String = "King" if card_name == "Joker" else card_name
 	var suit: String = "Black" if side == FDState.BLACK else "Red"
-	var path: String = "%s%s%s.png" % [ART_DIR, face, suit]
+	var path: String = "%s%s%s.png" % [ART_DIR, card_name, suit]
 	if not ResourceLoader.exists(path):
 		return null
 	return load(path)
@@ -223,7 +223,6 @@ func render(d: Dictionary) -> void:
 		texture = art_for(str(d.get("card_name", "")), side)
 	art.texture = texture
 	art.visible = texture != null
-	art.flip_v = d.get("card_name", "") == "Joker"
 	# A revealed corpse keeps its face but loses its colour; the glyph is only
 	# needed when there is no art behind it to say what the slot holds.
 	art.modulate = DEAD_TINT if not d.get("alive", true) else ART_TINT
