@@ -1,0 +1,243 @@
+[gd_scene load_steps=3 format=3 uid="uid://caow618yqunds"]
+
+[ext_resource type="Script" path="res://Scene/mode_select.gd" id="1_mdsel"]
+
+[sub_resource type="ButtonGroup" id="BG_difficulty"]
+
+[node name="ModeSelect" type="Node2D"]
+script = ExtResource("1_mdsel")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="BG" type="ColorRect" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.08, 0.08, 0.12, 1)
+
+[node name="Root" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_top = 34.0
+offset_bottom = 106.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 54
+text = "REMI SHOWDOWN"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SuitLabel" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_top = 110.0
+offset_bottom = 144.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.72, 1)
+theme_override_font_sizes/font_size = 21
+text = "Playing as: -"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ChooseLabel" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_top = 152.0
+offset_bottom = 196.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 28
+text = "Choose game mode:"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FaceUpBtn" type="Button" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -470.0
+offset_top = 206.0
+offset_right = -40.0
+offset_bottom = 300.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 32
+text = "FACE-UP BATTLE"
+
+[node name="FaceUpDesc" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -470.0
+offset_top = 310.0
+offset_right = -40.0
+offset_bottom = 430.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.72, 1)
+theme_override_font_sizes/font_size = 17
+text = "The classic table. Every card is visible from the start. Slots act in order, attacks are locked to the facing lane, and skills pick their own targets."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="FaceDownBtn" type="Button" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 40.0
+offset_top = 206.0
+offset_right = 470.0
+offset_bottom = 300.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 32
+text = "FACE-DOWN BATTLE"
+
+[node name="FaceDownDesc" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 40.0
+offset_top = 310.0
+offset_right = 470.0
+offset_bottom = 430.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.72, 1)
+theme_override_font_sizes/font_size = 17
+text = "Place your row face down each round. Cards only reveal themselves when they act, dead cards stay on the board as decoys, and you fight on guesswork."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="FaceDownSoon" type="Label" parent="UI/Root"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 40.0
+offset_top = 434.0
+offset_right = 470.0
+offset_bottom = 460.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.3, 1)
+theme_override_font_sizes/font_size = 18
+text = "Not playable yet — board UI in progress"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DiffLabel" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_top = 448.0
+offset_bottom = 476.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.72, 1)
+theme_override_font_sizes/font_size = 19
+text = "Opponent"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Difficulty" type="HBoxContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -370.0
+offset_top = 484.0
+offset_right = 370.0
+offset_bottom = 560.0
+grow_horizontal = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="EasyBtn" type="Button" parent="UI/Root/Difficulty"]
+custom_minimum_size = Vector2(180, 76)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+toggle_mode = true
+button_group = SubResource("BG_difficulty")
+text = "EASY"
+
+[node name="NormalBtn" type="Button" parent="UI/Root/Difficulty"]
+custom_minimum_size = Vector2(180, 76)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+toggle_mode = true
+button_group = SubResource("BG_difficulty")
+text = "NORMAL"
+
+[node name="HardBtn" type="Button" parent="UI/Root/Difficulty"]
+custom_minimum_size = Vector2(180, 76)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+toggle_mode = true
+button_group = SubResource("BG_difficulty")
+text = "HARD"
+
+[node name="DiffDesc" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -420.0
+offset_top = 570.0
+offset_right = 420.0
+offset_bottom = 624.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.55, 0.59, 0.66, 1)
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="OnlineBtn" type="Button" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -292.0
+offset_top = -92.0
+offset_right = -32.0
+offset_bottom = -22.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 21
+text = "PLAY ONLINE >"
+
+[node name="BackBtn" type="Button" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = -92.0
+offset_right = 212.0
+offset_bottom = -22.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 22
+text = "< Back"
+
+[connection signal="pressed" from="UI/Root/FaceUpBtn" to="." method="_on_face_up_btn_pressed"]
+[connection signal="pressed" from="UI/Root/FaceDownBtn" to="." method="_on_face_down_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Difficulty/EasyBtn" to="." method="_on_easy_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Difficulty/NormalBtn" to="." method="_on_normal_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Difficulty/HardBtn" to="." method="_on_hard_btn_pressed"]
+[connection signal="pressed" from="UI/Root/OnlineBtn" to="." method="_on_online_btn_pressed"]
+[connection signal="pressed" from="UI/Root/BackBtn" to="." method="_on_back_btn_pressed"]

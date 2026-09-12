@@ -1,0 +1,176 @@
+#cloud-config
+# Hetzner Cloud "Cloud config" (user-data) for the Remi Showdown match server.
+# Paste this whole file into the Cloud config box when creating the server.
+#
+# TESTED SHAPE: Ubuntu 24.04, CX22 (2 vCPU / 4 GB) or smaller. The server is a
+# turn-based game holding a few KB per match in memory, so the cheapest x86
+# instance is plenty. Use an x86 image, not ARM (CAX) - the Godot URL below is
+# the x86_64 build; ARM needs the linux.arm64 archive instead.
+#
+# WHAT THIS DOES
+#   * installs Godot 4.1.3 (same version as the editor, so the script cache the
+#     server builds matches what the project expects)
+#   * creates an unprivileged `remi` user that owns and runs the service
+#   * installs Caddy in front of it to terminate TLS and speak wss://
+#   * opens 22/80/443 only - the game port is reachable through Caddy, not
+#     directly from the internet
+#   * leaves the game service enabled but NOT started, because the project
+#     files are not here yet
+#
+# WHY wss:// AND NOT ws://
+# The Android export targets SDK 33, and the Godot export templates do not set
+# android:usesCleartextTraffic. From SDK 28 onward the platform default is to
+# BLOCK cleartext, so a phone will refuse ws:// to a bare IP. wss:// with a real
+# certificate works everywhere and encrypts the match traffic, so it is the
+# right answer rather than a workaround.
+#
+# AFTER IT BOOTS (three steps, all from your machine):
+#   1. Point a DNS A record at the server's IPv4 address.
+#   2. Put that name in /etc/caddy/Caddyfile (replace REPLACE_ME.example.com)
+#      and run: systemctl reload caddy
+#   3. Upload the project and start it:  server/deploy.sh root@<ip> <domain>
+#
+# Then in the game's lobby, the server address is:  wss://<your-domain>
+
+package_update: true
+package_upgrade: true
+
+users:
+  - name: remi
+    system: true
+    # No shell and no sudo: this account exists to own a game process, and
+    # nothing needs to log in as it.
+    shell: /usr/sbin/nologin
+    home: /opt/remi
+    lock_passwd: true
+
+packages:
+  - unzip
+  - curl
+  - ca-certificates
+  - ufw
+  - debian-keyring
+  - debian-archive-keyring
+  - apt-transport-https
+  # Godot's Linux build links against X11/GL/ALSA even when run with --headless.
+  # They are a few MB and their absence is a confusing "cannot execute" failure,
+  # so they go in unconditionally.
+  - libx11-6
+  - libxcursor1
+  - libxinerama1
+  - libxrandr2
+  - libxi6
+  - libxext6
+  - libgl1
+  - libpulse0
+
+write_files:
+  - path: /etc/systemd/system/remi-server.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Remi Showdown face-down match server
+      Documentation=https://github.com/ (see RemiShowdown/README.md)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      User=remi
+      Group=remi
+      WorkingDirectory=/opt/remi/game
+      # Godot writes its config and shader cache under $HOME. Without this it
+      # tries /root or /nonexistent and dies on a read-only path.
+      Environment=HOME=/opt/remi
+      Environment=XDG_DATA_HOME=/opt/remi/.local/share
+      Environment=XDG_CONFIG_HOME=/opt/remi/.config
+      ExecStart=/opt/godot/godot --headless --path /opt/remi/game \
+        --script res://server/fd_server.gd -- port=8910
+      # Every match lives in memory, so a restart drops whatever is in progress.
+      # That is the accepted trade (see server/fd_server.gd): restarting beats
+      # carrying a database for a game you play with friends.
+      Restart=always
+      RestartSec=3
+      StandardOutput=journal
+      StandardError=journal
+
+      NoNewPrivileges=true
+      PrivateTmp=true
+      ProtectSystem=strict
+      ProtectHome=true
+      ProtectKernelTunables=true
+      ProtectControlGroups=true
+      RestrictSUIDSGID=true
+      ReadWritePaths=/opt/remi
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /etc/caddy/Caddyfile
+    permissions: "0644"
+    content: |
+      # Replace the hostname, then: systemctl reload caddy
+      # Caddy fetches and renews a Let's Encrypt certificate on its own; it
+      # needs ports 80 and 443 open and DNS already pointing here.
+      REPLACE_ME.example.com {
+      	# Caddy v2 proxies WebSocket upgrades transparently - no extra config.
+      	reverse_proxy 127.0.0.1:8910
+      }
+
+  # Convenience wrapper so re-deploying is one command on the server.
+  - path: /usr/local/bin/remi-reload
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # Rebuild Godot's script-class cache, then restart the service.
+      #
+      # The cache (.godot/global_script_class_cache.cfg) is what lets the server
+      # resolve FDRules, FDNet and friends by class_name. It is NOT uploaded -
+      # it is generated here by running the editor once, headless. Skipping this
+      # gives "Identifier FDNet not declared in the current scope" at startup.
+      set -euo pipefail
+      echo "rebuilding script class cache..."
+      sudo -u remi HOME=/opt/remi /opt/godot/godot --headless --editor \
+        --path /opt/remi/game --quit >/dev/null 2>&1 || true
+      systemctl restart remi-server
+      sleep 2
+      systemctl --no-pager --lines=15 status remi-server
+
+runcmd:
+  # --- Godot ---------------------------------------------------------------
+  - mkdir -p /opt/godot /opt/remi/game
+  - curl -fsSL -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.1.3-stable/Godot_v4.1.3-stable_linux.x86_64.zip
+  - unzip -o -q /tmp/godot.zip -d /opt/godot
+  - mv /opt/godot/Godot_v4.1.3-stable_linux.x86_64 /opt/godot/godot
+  - chmod +x /opt/godot/godot
+  - rm -f /tmp/godot.zip
+  # ALSA's package name changed in Ubuntu 24.04 (t64 ABI transition), so try
+  # both rather than pinning to one release.
+  - apt-get install -y libasound2t64 || apt-get install -y libasound2 || true
+
+  # --- Caddy ---------------------------------------------------------------
+  - curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  - curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt | tee /etc/apt/sources.list.d/caddy-stable.list
+  - apt-get update
+  - apt-get install -y caddy
+
+  # --- Firewall ------------------------------------------------------------
+  # 8910 is deliberately absent: the game port is reached through Caddy on 443,
+  # never directly. Hetzner's own Cloud Firewall is worth setting to match.
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
+
+  # --- Service -------------------------------------------------------------
+  - chown -R remi:remi /opt/remi
+  - systemctl daemon-reload
+  # Enabled so it survives a reboot, but not started: /opt/remi/game is still
+  # empty until the project is uploaded.
+  - systemctl enable remi-server
+  - systemctl enable caddy
+
+final_message: |
+  Remi server image ready after $UPTIME seconds.
+  Next: point DNS here, set the hostname in /etc/caddy/Caddyfile, then upload
+  the project with server/deploy.sh and run: remi-reload

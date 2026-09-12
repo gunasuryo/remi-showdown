@@ -1,0 +1,38 @@
+# Godot's import cache and generated data. Regenerated on first open.
+.godot/
+
+# Godot's Android build template. 200+ MB of prebuilt libraries, reinstalled by
+# the editor via Project > Install Android Build Template. Two files in here are
+# ~100 MB each and are what made pushes fail.
+/android/
+
+# --- Exported builds -------------------------------------------------------
+# Patterns, not bare names: `.apk` alone matches only a file literally called
+# ".apk", which is not a thing anyone produces.
+*.apk
+*.aab
+*.exe
+*.pck
+*.x86_64
+*.x86_32
+*.zip
+
+# Godot's Linux export writes a LAUNCHER SCRIPT next to the binary, named after
+# the project - "Remi Showdown_v0_1_2.sh". Match those specifically rather than
+# with a bare *.sh, which also swallowed server/setup.sh and server/deploy.sh
+# and quietly kept the deployment scripts out of the repo.
+Remi*Showdown*.sh
+Remi*Showdown*.console.exe
+
+# --- Local and editor state ------------------------------------------------
+# Holds absolute paths to the signing keystore on this machine.
+export_presets.cfg
+
+.vscode/
+.idea/
+*.tmp
+*.bak
+
+# A backup of the pre-purge history. Never part of the project, and its
+# loose objects include files over GitHub's 100 MB limit.
+.git.old/

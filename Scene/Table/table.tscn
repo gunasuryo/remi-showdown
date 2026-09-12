@@ -1,0 +1,211 @@
+[gd_scene load_steps=9 format=3 uid="uid://c4jwbtc03a28p"]
+
+[ext_resource type="Script" path="res://Scene/Table/table.gd" id="1_0rcqh"]
+[ext_resource type="PackedScene" uid="uid://cl3220qtaaean" path="res://Scene/Card/ace.tscn" id="1_r8a5d"]
+[ext_resource type="Texture2D" uid="uid://b01tmd7yq7g2b" path="res://Asset/exit.png" id="3_kx4yc"]
+[ext_resource type="PackedScene" uid="uid://bwkhhmleqb0up" path="res://Scene/Card/jack.tscn" id="4_v30ph"]
+[ext_resource type="PackedScene" uid="uid://dsllj4fhqbiro" path="res://Scene/Card/queen.tscn" id="5_bb4du"]
+[ext_resource type="PackedScene" uid="uid://b0e87trf7ibfu" path="res://Scene/Table/coin.tscn" id="6_gyvny"]
+[ext_resource type="PackedScene" uid="uid://kimgup06nyn0" path="res://Scene/Card/king.tscn" id="6_wixo0"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_77gjd"]
+font_size = 72
+
+[node name="Table" type="Node2D"]
+script = ExtResource("1_0rcqh")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(0.3, 0.3)
+
+[node name="ExitBtn" type="TextureButton" parent="."]
+offset_left = 2392.0
+offset_top = -1391.0
+offset_right = 2492.0
+offset_bottom = -1291.0
+texture_normal = ExtResource("3_kx4yc")
+metadata/_edit_use_anchors_ = true
+
+[node name="BoxLabel" type="Label" parent="."]
+offset_left = 1579.0
+offset_top = -862.0
+offset_right = 1796.0
+offset_bottom = -751.0
+text = "Box:"
+label_settings = SubResource("LabelSettings_77gjd")
+
+[node name="TurnLabel" type="Label" parent="."]
+offset_left = 1583.0
+offset_top = -714.0
+offset_right = 1800.0
+offset_bottom = -603.0
+text = "Turn:"
+label_settings = SubResource("LabelSettings_77gjd")
+
+[node name="StatusLabel1" type="Label" parent="."]
+offset_left = -1955.0
+offset_top = 1388.0
+offset_right = -1738.0
+offset_bottom = 1499.0
+theme_override_font_sizes/font_size = 0
+text = "Turn:"
+label_settings = SubResource("LabelSettings_77gjd")
+
+[node name="StatusLabel2" type="Label" parent="."]
+offset_left = -1958.0
+offset_top = 1271.0
+offset_right = -1741.0
+offset_bottom = 1375.0
+theme_override_font_sizes/font_size = 0
+text = "Turn:"
+label_settings = SubResource("LabelSettings_77gjd")
+
+[node name="StatusLabel3" type="Label" parent="."]
+offset_left = -1952.0
+offset_top = 1511.0
+offset_right = -1735.0
+offset_bottom = 1615.0
+theme_override_font_sizes/font_size = 0
+text = "Winner:"
+label_settings = SubResource("LabelSettings_77gjd")
+
+[node name="CardsBlack" type="Node2D" parent="."]
+position = Vector2(-1261, -499)
+metadata/_edit_group_ = true
+
+[node name="Ace" parent="CardsBlack" instance=ExtResource("1_r8a5d")]
+position = Vector2(-1359, -350)
+
+[node name="Jack" parent="CardsBlack" instance=ExtResource("4_v30ph")]
+position = Vector2(-27, -357)
+
+[node name="Queen" parent="CardsBlack" instance=ExtResource("5_bb4du")]
+position = Vector2(1218, -350)
+
+[node name="King" parent="CardsBlack" instance=ExtResource("6_wixo0")]
+position = Vector2(2294, -357)
+
+[node name="CardsRed" type="Node2D" parent="."]
+position = Vector2(-940, 1738)
+metadata/_edit_group_ = true
+
+[node name="Ace" parent="CardsRed" instance=ExtResource("1_r8a5d")]
+position = Vector2(-1359, -350)
+suit = 2
+
+[node name="Jack" parent="CardsRed" instance=ExtResource("4_v30ph")]
+position = Vector2(-27, -357)
+suit = 2
+
+[node name="Queen" parent="CardsRed" instance=ExtResource("5_bb4du")]
+position = Vector2(1218, -350)
+suit = 2
+
+[node name="King" parent="CardsRed" instance=ExtResource("6_wixo0")]
+position = Vector2(1973, -2594)
+suit = 2
+
+[node name="CardMarkers" type="Node2D" parent="."]
+visible = false
+position = Vector2(-1430, -588)
+
+[node name="Marker2D1" type="Marker2D" parent="CardMarkers"]
+position = Vector2(1049, 1059)
+
+[node name="Marker2D2" type="Marker2D" parent="CardMarkers"]
+position = Vector2(168, 1130)
+
+[node name="Marker2D3" type="Marker2D" parent="CardMarkers"]
+position = Vector2(1533, -7)
+
+[node name="Marker2D4" type="Marker2D" parent="CardMarkers"]
+position = Vector2(1506, 1150)
+
+[node name="Marker2D5" type="Marker2D" parent="CardMarkers"]
+position = Vector2(2704, 61)
+
+[node name="Marker2D6" type="Marker2D" parent="CardMarkers"]
+position = Vector2(2788, 1131)
+
+[node name="Deadmarker" type="Marker2D" parent="."]
+position = Vector2(1221, -152)
+
+[node name="CardStartMarker" type="Marker2D" parent="."]
+position = Vector2(-1422, -465)
+
+[node name="Coin" parent="." instance=ExtResource("6_gyvny")]
+position = Vector2(1731, -1024)
+scale = Vector2(2, 2)
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="MenuBtn" type="Button" parent="UILayer"]
+offset_left = 40.0
+offset_top = 20.0
+offset_right = 200.0
+offset_bottom = 70.0
+theme_override_font_sizes/font_size = 20
+text = "< Menu"
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="GameOverPanel" type="PanelContainer" parent="CanvasLayer"]
+visible = false
+offset_left = 300.0
+offset_top = 150.0
+offset_right = 900.0
+offset_bottom = 350.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameOverPanel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ResultLabel" type="Label" parent="CanvasLayer/GameOverPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 56
+text = "Winner: —"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameOverPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="MenuBtn" type="Button" parent="CanvasLayer/GameOverPanel/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(150, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Menu"
+
+[node name="AgainBtn" type="Button" parent="CanvasLayer/GameOverPanel/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(150, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Play Again"
+
+[connection signal="attack_pressed" from="CardsBlack/Ace" to="." method="_on_ace_attack_pressed"]
+[connection signal="skill_pressed" from="CardsBlack/Ace" to="." method="_on_ace_skill_pressed"]
+[connection signal="target_pressed" from="CardsBlack/Ace" to="." method="_on_ace_target_pressed"]
+[connection signal="attack_pressed" from="CardsBlack/Jack" to="." method="_on_jack_attack_pressed"]
+[connection signal="skill_pressed" from="CardsBlack/Jack" to="." method="_on_jack_skill_pressed"]
+[connection signal="target_pressed" from="CardsBlack/Jack" to="." method="_on_jack_target_pressed"]
+[connection signal="attack_pressed" from="CardsBlack/Queen" to="." method="_on_queen_attack_pressed"]
+[connection signal="skill_pressed" from="CardsBlack/Queen" to="." method="_on_queen_skill_pressed"]
+[connection signal="target_pressed" from="CardsBlack/Queen" to="." method="_on_queen_target_pressed"]
+[connection signal="attack_pressed" from="CardsBlack/King" to="." method="_on_king_attack_pressed"]
+[connection signal="skill_pressed" from="CardsBlack/King" to="." method="_on_king_skill_pressed"]
+[connection signal="target_pressed" from="CardsBlack/King" to="." method="_on_king_target_pressed"]
+[connection signal="attack_pressed" from="CardsRed/Ace" to="." method="_on_ace_attack_pressed"]
+[connection signal="skill_pressed" from="CardsRed/Ace" to="." method="_on_ace_skill_pressed"]
+[connection signal="target_pressed" from="CardsRed/Ace" to="." method="_on_ace_target_pressed"]
+[connection signal="attack_pressed" from="CardsRed/Jack" to="." method="_on_jack_attack_pressed"]
+[connection signal="skill_pressed" from="CardsRed/Jack" to="." method="_on_jack_skill_pressed"]
+[connection signal="target_pressed" from="CardsRed/Jack" to="." method="_on_jack_target_pressed"]
+[connection signal="attack_pressed" from="CardsRed/Queen" to="." method="_on_queen_attack_pressed"]
+[connection signal="skill_pressed" from="CardsRed/Queen" to="." method="_on_queen_skill_pressed"]
+[connection signal="target_pressed" from="CardsRed/Queen" to="." method="_on_queen_target_pressed"]
+[connection signal="attack_pressed" from="CardsRed/King" to="." method="_on_king_attack_pressed"]
+[connection signal="skill_pressed" from="CardsRed/King" to="." method="_on_king_skill_pressed"]
+[connection signal="target_pressed" from="CardsRed/King" to="." method="_on_king_target_pressed"]
+[connection signal="pressed" from="UILayer/MenuBtn" to="." method="_on_menu_btn_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameOverPanel/VBoxContainer/HBoxContainer/MenuBtn" to="." method="_on_menu_btn_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameOverPanel/VBoxContainer/HBoxContainer/AgainBtn" to="." method="_on_again_btn_pressed"]

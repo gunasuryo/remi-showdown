@@ -1,0 +1,486 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scene/FaceDown/fd_table.gd" id="1_fdtbl"]
+
+[sub_resource type="StyleBoxFlat" id="SB_overlay"]
+bg_color = Color(0.1, 0.11, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.26, 0.29, 0.36, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.5)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="SB_log"]
+bg_color = Color(0.09, 0.1, 0.13, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.19, 0.21, 0.26, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+
+[node name="FDTable" type="Node2D"]
+script = ExtResource("1_fdtbl")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="BG" type="ColorRect" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.07, 0.075, 0.1, 1)
+
+[node name="Root" type="Control" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Status" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = -232.0
+offset_bottom = 44.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "Round 1"
+vertical_alignment = 1
+
+[node name="EnemyTag" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 48.0
+offset_right = -232.0
+offset_bottom = 70.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.85, 0.42, 0.42, 1)
+theme_override_font_sizes/font_size = 14
+text = "ENEMY"
+vertical_alignment = 1
+
+[node name="EnemyRoster" type="HBoxContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 46.0
+offset_right = -232.0
+offset_bottom = 72.0
+grow_horizontal = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="EnemyBadge" type="PanelContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+offset_left = 236.0
+offset_top = 44.0
+offset_right = 404.0
+offset_bottom = 74.0
+mouse_filter = 2
+
+[node name="L" type="Label" parent="UI/Root/EnemyBadge"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+vertical_alignment = 1
+text = ""
+
+[node name="EnemyRow" type="HBoxContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 76.0
+offset_right = -232.0
+offset_bottom = 330.0
+grow_horizontal = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Hint" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 334.0
+offset_right = -232.0
+offset_bottom = 372.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.68, 0.72, 0.79, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="PlayerTag" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -338.0
+offset_right = -232.0
+offset_bottom = -316.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.62, 0.72, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "YOU"
+vertical_alignment = 1
+
+[node name="PlayerRoster" type="HBoxContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -340.0
+offset_right = -232.0
+offset_bottom = -314.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="TurnBadge" type="PanelContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 236.0
+offset_top = -342.0
+offset_right = 404.0
+offset_bottom = -312.0
+mouse_filter = 2
+
+[node name="L" type="Label" parent="UI/Root/TurnBadge"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+vertical_alignment = 1
+text = ""
+
+[node name="PlayerRow" type="HBoxContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -310.0
+offset_right = -232.0
+offset_bottom = -56.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Actions" type="VBoxContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -216.0
+offset_top = -366.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="RandomBtn" type="Button" parent="UI/Root/Actions"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 19
+text = "Randomize"
+
+[node name="LockBtn" type="Button" parent="UI/Root/Actions"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "Lock in"
+
+[node name="AttackBtn" type="Button" parent="UI/Root/Actions"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "Attack"
+
+[node name="SkillBtn" type="Button" parent="UI/Root/Actions"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "Skill"
+
+[node name="CancelBtn" type="Button" parent="UI/Root/Actions"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "Cancel"
+
+[node name="RulesBtn" type="Button" parent="UI/Root/Actions"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "Rules"
+
+[node name="MenuBtn" type="Button" parent="UI/Root/Actions"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "Menu"
+
+[node name="SubHint" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -50.0
+offset_right = -232.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.3, 1)
+theme_override_font_sizes/font_size = 15
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LogPanel" type="PanelContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -216.0
+offset_top = 48.0
+offset_right = -16.0
+offset_bottom = -380.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("SB_log")
+
+[node name="LogScroll" type="ScrollContainer" parent="UI/Root/LogPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="LogText" type="RichTextLabel" parent="UI/Root/LogPanel/LogScroll"]
+custom_minimum_size = Vector2(164, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
+bbcode_enabled = true
+fit_content = true
+scroll_following = true
+
+[node name="RulesPanel" type="PanelContainer" parent="UI/Root"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 90.0
+offset_top = 30.0
+offset_right = -90.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("SB_overlay")
+
+[node name="M" type="MarginContainer" parent="UI/Root/RulesPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="V" type="VBoxContainer" parent="UI/Root/RulesPanel/M"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="UI/Root/RulesPanel/M/V"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Face-down rules"
+
+[node name="Scroll" type="ScrollContainer" parent="UI/Root/RulesPanel/M/V"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Body" type="RichTextLabel" parent="UI/Root/RulesPanel/M/V/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/bold_font_size = 16
+bbcode_enabled = true
+fit_content = true
+text = "[b]The cards[/b]\nAce 60hp / 14atk — shields an ally for 30, or three allies for 25 each when rallied. The shield is held up by the Ace: it lapses when that Ace acts again, and collapses if the Ace dies. A shield never fully stops a hit — 10% of every blow (at least 1) always reaches HP.\nJack 45hp / 26atk — shoots any enemy slot for 20, or three lanes for 17 each when rallied.\nQueen 55hp / 14atk — heals an ally for 30.\nKing 70hp / 20atk — rallies an ally.\nJoker 65hp / 16atk — tricks an enemy.\n\n[b]Each round[/b]\n1. Both sides arrange their whole row face down, living cards and dead decoys alike. Neither side sees the other's arrangement.\n2. Sides alternate, one card acting at a time, until every card has acted once.\n3. The board is as wide as the larger surviving team; the shorter side pads with corpses. At 1 vs 1 there is a single slot and nowhere to hide.\n\n[b]Acting[/b]\n[b]Attack[/b] reaches its own lane at full damage, or either neighbouring lane for half. Whatever sits there takes it — living card, dead decoy, or nothing — so reading the enemy row is what the choice is for.\n[b]Skill[/b] picks its own slot. Ace, Queen and King target your row; Jack and Joker target the enemy row. A rallied skill covers three lanes, and the button says which one it is: a rallied Jack reads [b]Shoot+[/b].\n\n[b]Hidden information[/b]\nA card is revealed to the enemy when it acts or when it is hit. Reveals last until the end of the round, then everything is hidden and rearranged again.\nDead cards stay on the board as decoys. Attacking one wastes the action.\nThe strip along the top of YOUR cards is what the enemy knows: [color=#4d9e6b]green[/color] means still hidden, [color=#f29e33]amber[/color] means revealed until the round ends.\n\n[b]Rally (King)[/b]\nRally and trick are mirror images. Both move a card one rung along the same ladder — [b]tricked · normal · rallied[/b] — and neither ever moves it two.\nA rally lifts an ally one rung UP. A tricked ally is freed, and that is all that rally does for it. An ally who is not tricked becomes rallied: its next skill covers three lanes instead of one.\nRallying yourself instead arms [b]rally+[/b]: your next rally lands on three allies in a row at once, giving each of them that same ordinary rally. A rally ends when the King that granted it acts again — unless that King is dead, which makes it a [b]last rally[/b] that survives to the end.\n\n[b]Trick (Joker)[/b]\nA trick knocks its target one rung DOWN that same ladder. A rallied card loses its rally; only a card with no rally left has its skill sealed so it can only attack, and its attack halved. A King's own armed rally+ cannot be peeled at all — a trick on an armed King seals its skill for a while, but the arm is still there when the seal lifts. Because a rally+ rallies three allies and the Joker only gets one action, it can take just one of them back. The seal also lifts on its own when the Joker acts again or dies.\n\n[b]Buffs are public[/b]\nA shield, a rally or a heal shows on the slot it was applied to, even while that card is still face down. The enemy sees SHIELDED, RALLIED or TENDED on the lane — never which card is standing in it. The mark lasts only for that round: once the rows are rearranged it is gone.\nSupport skills may also be spent on your own dead decoys. It achieves nothing: a corpse never acts and a decoy soaks an attack whole either way. What it buys is the lie. A rallied corpse looks exactly like a rallied survivor, so a slot you have made look precious is a slot the enemy has to decide whether to spend actions on. The cost of telling it is the action you spent.\n\n[b]Status on a card[/b]\n[color=#ffd54f]SHOOT+ / SHIELD+ / HEAL+ / TRICK+[/color] this card is rallied — its next skill covers three lanes · [color=#ffd54f]SHOOT+ (LAST)[/color] the King that granted it is dead, so the rally never lapses · [color=#ffd54f]RALLY+ READY[/color] this King's next rally will hit three allies at once · [color=#ca82d9]TRICKED -50%[/color] skill sealed and attack halved"
+
+[node name="Over" type="PanelContainer" parent="UI/Root"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -290.0
+offset_top = -140.0
+offset_right = 290.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("SB_overlay")
+
+[node name="V" type="VBoxContainer" parent="UI/Root/Over"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Result" type="Label" parent="UI/Root/Over/V"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "—"
+
+[node name="Sub" type="Label" parent="UI/Root/Over/V"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.68, 0.72, 0.79, 1)
+horizontal_alignment = 1
+autowrap_mode = 3
+text = ""
+
+[node name="H" type="HBoxContainer" parent="UI/Root/Over/V"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="AgainBtn" type="Button" parent="UI/Root/Over/V/H"]
+custom_minimum_size = Vector2(190, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+text = "Play again"
+
+[node name="MenuBtn" type="Button" parent="UI/Root/Over/V/H"]
+custom_minimum_size = Vector2(190, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+text = "Menu"
+
+[node name="Confirm" type="PanelContainer" parent="UI/Root"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -130.0
+offset_right = 300.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("SB_overlay")
+
+[node name="M" type="MarginContainer" parent="UI/Root/Confirm"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="V" type="VBoxContainer" parent="UI/Root/Confirm/M"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="UI/Root/Confirm/M/V"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Leave the match?"
+horizontal_alignment = 1
+
+[node name="Body" type="Label" parent="UI/Root/Confirm/M/V"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.68, 0.72, 0.79, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="H" type="HBoxContainer" parent="UI/Root/Confirm/M/V"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="StayBtn" type="Button" parent="UI/Root/Confirm/M/V/H"]
+custom_minimum_size = Vector2(200, 66)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Keep playing"
+
+[node name="LeaveBtn" type="Button" parent="UI/Root/Confirm/M/V/H"]
+custom_minimum_size = Vector2(160, 66)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Leave"
+
+[connection signal="pressed" from="UI/Root/Confirm/M/V/H/StayBtn" to="." method="_on_stay_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Confirm/M/V/H/LeaveBtn" to="." method="_on_leave_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Actions/RandomBtn" to="." method="_on_random_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Actions/LockBtn" to="." method="_on_lock_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Actions/AttackBtn" to="." method="_on_attack_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Actions/SkillBtn" to="." method="_on_skill_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Actions/CancelBtn" to="." method="_on_cancel_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Actions/RulesBtn" to="." method="_on_rules_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Actions/MenuBtn" to="." method="_on_menu_btn_pressed"]
+[connection signal="pressed" from="UI/Root/RulesPanel/M/V/CloseRulesBtn" to="." method="_on_close_rules_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Over/V/H/AgainBtn" to="." method="_on_again_btn_pressed"]
+[connection signal="pressed" from="UI/Root/Over/V/H/MenuBtn" to="." method="_on_menu_btn_pressed"]

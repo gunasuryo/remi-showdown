@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3 uid="uid://joker_scene_001"]
+
+[ext_resource type="PackedScene" uid="uid://dcuyrxvstwyto" path="res://Scene/Card/card.tscn" id="1_joker"]
+[ext_resource type="Script" path="res://Scene/Card/joker.gd" id="2_joker"]
+[ext_resource type="Texture2D" uid="uid://bpo0devu4agt1" path="res://Asset/KingBlack.png" id="3_joker"]
+[ext_resource type="Texture2D" uid="uid://bqyy4vj4nr5ub" path="res://Asset/KingRed.png" id="4_joker"]
+
+[node name="Joker" instance=ExtResource("1_joker")]
+script = ExtResource("2_joker")
+
+[node name="Black" parent="." index="0"]
+texture = ExtResource("3_joker")
+flip_v = true
+
+[node name="Red" parent="." index="1"]
+texture = ExtResource("4_joker")
+flip_v = true
+
+[node name="SkillBtn" parent="BattleButtons" index="1"]
+texture_normal = null
+
+[node name="TrickLabel" type="Label" parent="BattleButtons/SkillBtn"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 52
+theme_override_colors/font_color = Color(0.8, 0.1, 0.5, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 6
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "TRICK"
