@@ -53,6 +53,7 @@ func _initialize() -> void:
 	n5_hostile_input()
 	n6_buffs_cross_the_wire(fresh)
 	n7_events_are_redacted(fresh)
+	n8_redaction_happens_before_advance()
 
 	print("")
 	print("%d assertions, %d failed" % [passed + failed, failed])
@@ -226,3 +227,59 @@ func n7_events_are_redacted(s: FDState) -> void:
 	var now: Array = FDNet.redact_events(s, raw, FDState.BLACK)
 	_eq(int(now[0].target), jack.id, "N7 a revealed enemy keeps its identity")
 	s.revealed[FDState.RED].erase(slot)
+
+# WHEN the events are redacted matters as much as whether they are.
+#
+# The server used to call FDRules.advance() and only then redact, which is a
+# whole round too late: advance() can roll the round over, and begin_round()
+# empties both rows and clears every reveal. visible_id() then asks "is this
+# card standing in a revealed slot?" of a board that no longer exists, gets -1
+# back from slot_of() for everything, and hides the lot - so the player's log
+# described the action they had just watched as happening to "a face-down card".
+#
+# A rallied Shoot is the likeliest way to hit it: three lanes at once, often the
+# last action of a round, often several kills.
+func n8_redaction_happens_before_advance() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	var s := FDRules.new_match(FDState.BLACK)
+	FDRules.commit_placement(s, FDState.BLACK, FDRules.auto_place(s, FDState.BLACK, rng))
+	FDRules.commit_placement(s, FDState.RED, FDRules.auto_place(s, FDState.RED, rng))
+
+	# Burn every action except one, so the next one ends the round.
+	for side in [FDState.BLACK, FDState.RED]:
+		for c in s.living(side):
+			s.acted[side][c.id] = true
+	var jack: FDCard = s.find_by_name(FDState.BLACK, "Jack")
+	s.acted[FDState.BLACK].erase(jack.id)
+	s.side_to_act = FDState.BLACK
+	jack.rallied = true            # Shoot+, three lanes
+
+	var res: Dictionary = FDRules.resolve(s, FDState.BLACK,
+		{"card_id": jack.id, "kind": "skill", "target_slot": 2})
+	_ok(res.ok, "N8 the rallied shoot resolves", str(res.error))
+
+	# Redacted here, against the board it happened on.
+	var before: Array = FDNet.redact_events(s, res.events, FDState.BLACK)
+
+	_eq(FDRules.advance(s), "round_end", "N8 setting up a round rollover")
+	_eq(s.slots[FDState.RED].size(), 0, "N8 begin_round has emptied the rows")
+
+	# ...and what redacting afterwards would have produced.
+	var after: Array = FDNet.redact_events(s, res.events, FDState.BLACK)
+
+	var named_before := 0
+	var named_after := 0
+	for e in before:
+		if e.has("target") and int(e.target) != FDCard.HIDDEN:
+			named_before += 1
+	for e in after:
+		if e.has("target") and int(e.target) != FDCard.HIDDEN:
+			named_after += 1
+
+	# The shooter revealed what it hit, so the shooting side is entitled to know
+	# what it shot. That is the whole point of redacting at the right moment.
+	_ok(named_before > 0, "N8 redacting in time keeps the cards it just revealed")
+	_ok(named_after < named_before,
+		"N8 redacting after advance() would have hidden them (%d -> %d)"
+		% [named_before, named_after])

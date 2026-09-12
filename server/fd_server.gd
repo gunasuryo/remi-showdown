@@ -57,6 +57,16 @@ class Room:
 	var seats := {}          # side -> Seat
 	var created_at: float = 0.0
 
+	# Bumped once per real state change, and carried on every snapshot. A client
+	# uses it to notice it has MISSED one - which it otherwise cannot, because
+	# every push looks the same and nothing acknowledges anything.
+	#
+	# A snapshot is absolute rather than a delta, so a gap never corrupts the
+	# client's state: whatever arrives next is the whole truth. What a gap costs
+	# is the EVENTS for the step that went missing - the log lines and the
+	# animation - and the client is told so rather than silently playing on.
+	var seq: int = 0
+
 	func occupied() -> int:
 		var n := 0
 		for side in seats:
@@ -161,6 +171,8 @@ func _handle(from: int, msg: Dictionary) -> void:
 			_do_action(from, msg)
 		"leave":
 			_do_leave(from)
+		"resync":
+			_do_resync(from)
 		_:
 			_send(from, {"t": "error", "msg": "unknown message"})
 
@@ -214,7 +226,7 @@ func _do_join(from: int, code: String, token: String, prefer: int = 0) -> void:
 			_send(from, {"t": "room", "code": code, "side": int(side),
 				"token": token, "v": FDNet.PROTOCOL_VERSION, "rejoined": true})
 			_broadcast(room, {"t": "peer", "event": "rejoined", "side": int(side)})
-			_sync(room, [])
+			_sync(room, {})
 			print("fd_server: peer %d rejoined room %s" % [from, code])
 			return
 
@@ -269,7 +281,7 @@ func _do_join(from: int, code: String, token: String, prefer: int = 0) -> void:
 	if room.occupied() == 2 and room.state == null:
 		room.state = FDRules.new_match(FDState.BLACK)
 		print("fd_server: room %s match begins" % code)
-		_sync(room, [])
+		_sync(room, {})
 
 func _do_place(from: int, msg: Dictionary) -> void:
 	var ctx := _context(from)
@@ -297,7 +309,7 @@ func _do_place(from: int, msg: Dictionary) -> void:
 	# Each side is told the other has committed, but never WHAT was committed -
 	# that only ever leaves here through a redacted snapshot.
 	_broadcast(room, {"t": "peer", "event": "placed", "side": side})
-	_sync(room, [])
+	_sync(room, {})
 
 func _do_action(from: int, msg: Dictionary) -> void:
 	var ctx := _context(from)
@@ -322,16 +334,31 @@ func _do_action(from: int, msg: Dictionary) -> void:
 		_send(from, {"t": "error", "msg": res.error})
 		return
 
+	# Redact the events NOW, against the board they happened on.
+	#
+	# advance() may roll the round over, and begin_round() empties both rows and
+	# clears every reveal. Redacting afterwards asked "is this card in a revealed
+	# slot?" of a board that no longer existed: slot_of() returned -1 for
+	# everything, so every enemy id in the events collapsed to HIDDEN and the log
+	# described what the player had just watched happen as "a face-down card".
+	#
+	# A rallied Shoot is the action most likely to hit this, because it is the
+	# one most likely to END a round decisively - three lanes at once, often the
+	# last action of the round and often several kills.
 	var events: Array = res.events
+	var seen := {}
+	for side_key in room.seats:
+		seen[side_key] = FDNet.redact_events(room.state, events, int(side_key))
+
 	match FDRules.advance(room.state):
 		"game_over":
-			_sync(room, events)
+			_sync(room, seen)
 			_broadcast(room, {"t": "over", "winner": FDRules.winner(room.state)})
 		_:
 			# "round_end" needs no special handling: advance() has already run
 			# begin_round(), so the state is back in POSITIONING and both
 			# clients will be asked to place again by the snapshot itself.
-			_sync(room, events)
+			_sync(room, seen)
 
 func _do_leave(from: int) -> void:
 	_release(from)
@@ -358,18 +385,52 @@ func _context(from: int) -> Dictionary:
 # Every client gets its OWN snapshot, built for its own side. There is no
 # broadcast path for state, by construction - that is what stops a redaction
 # bug from becoming a leak to the other player.
-func _sync(room: Room, events: Array) -> void:
+# `events_by_side` maps a side to the events ALREADY redacted for it - see
+# _do_action, which has to redact before advancing the state. An empty dictionary
+# means this push carries no events, only the board.
+func _sync(room: Room, events_by_side: Dictionary) -> void:
 	if room.state == null:
 		return
+	room.seq += 1
 	for side in room.seats:
 		var seat: Seat = room.seats[side]
 		if seat == null or seat.peer_id == 0:
 			continue
-		var snap: Dictionary = FDNet.snapshot(room.state, int(side))
-		# Redacted per viewer, exactly like the snapshot. Broadcasting the raw
-		# array put every card id on both wires and undid the snapshot's work.
-		snap["events"] = FDNet.redact_events(room.state, events, int(side))
-		_send(seat.peer_id, snap)
+		_send(seat.peer_id, _snapshot_for(room, int(side),
+			events_by_side.get(side, [])))
+
+# One viewer's whole truth. Built per side by construction: there is no
+# broadcast path for state, which is what stops a redaction bug from becoming a
+# leak to the other player.
+func _snapshot_for(room: Room, side: int, events: Array) -> Dictionary:
+	var snap: Dictionary = FDNet.snapshot(room.state, side)
+	snap["seq"] = room.seq
+	snap["events"] = events
+	return snap
+
+# A client asking for the board again, because it believes it has lost track.
+#
+# This is the only way back from a lost packet. Every other push is a SIDE
+# EFFECT of somebody doing something - joining, placing, acting - so a client
+# that missed one had no way to ask and simply waited for a move that, from its
+# point of view, never came. The snapshot is absolute, so replying with the
+# current state is a complete repair.
+#
+# It does NOT bump the sequence: nothing changed, and a resync that looked like
+# a new step would make the other client think it had fallen behind.
+func _do_resync(from: int) -> void:
+	var ctx := _context(from)
+	if ctx.is_empty():
+		return
+	var room: Room = ctx.room
+	if room.state == null:
+		# Seated, but the match has not started - there is nothing to send, and
+		# saying so stops the client retrying on a timer forever.
+		_send(from, {"t": "waiting", "reason": "match has not started"})
+		return
+	var snap: Dictionary = _snapshot_for(room, int(ctx.side), [])
+	snap["resync"] = true
+	_send(from, snap)
 
 func _broadcast(room: Room, msg: Dictionary) -> void:
 	for side in room.seats:

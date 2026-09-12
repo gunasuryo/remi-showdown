@@ -693,6 +693,43 @@ presents the seat token issued on join. The token is also the authorisation: a
 held seat is *not* offered to a tokenless joiner, or anyone who guessed the room
 code could take a dropped player's seat mid-match.
 
+**Staying in step.** The socket staying up is not the same as the match staying
+in step, and this is where "we got stuck" came from. Every state push is a *side
+effect* of somebody doing something — joining, placing, acting — so a client that
+missed one had no way to ask for another. It waited for a move it had already
+been sent, on a socket that never dropped, with nothing on screen to suggest
+anything was wrong.
+
+Three pieces fix that:
+
+- **Sequence numbers.** Every snapshot carries `seq`, bumped once per real state
+  change. A gap tells the client it missed a push. The *board* is never
+  corrupted by one — snapshots are absolute, not deltas, so the next one is the
+  whole truth — but the **events** for the missing step are gone, so the client
+  drops the ones it did get rather than narrating half a turn.
+- **`{"t":"resync"}`.** The client can ask. The server replies to that peer
+  alone with the current board, flagged `resync`, carrying no events and
+  *without* bumping the sequence: nothing happened, and a resync that looked
+  like a step would make the opponent think *they* had fallen behind.
+- **A watchdog on silence.** Two different silences matter and only one is
+  obvious. Waiting on the opponent is the visible case. Waiting on your **own**
+  move to come back is the one that bites: locally it is still your turn until
+  the sync lands, so anything keyed on "is it my turn" sees nothing wrong at all
+  and waits forever. `FDRemoteSession` tracks both.
+
+**Events are redacted BEFORE `advance()`, and that ordering is the bug that
+started this.** `_do_action` used to resolve, advance, and only then redact — but
+`advance()` can roll the round over, and `begin_round()` empties both rows and
+clears every reveal. `visible_id()` then asked "is this card in a revealed
+slot?" of a board that no longer existed, got `-1` back from `slot_of()` for
+everything, and hid the lot. The player's log described the action they had just
+watched as happening to "a face-down card", and no enemy HP was sent at all.
+
+A rallied **Shoot+** is the likeliest way to hit it: three lanes at once, often
+the last action of a round, often several kills. `test_fd_net.gd` N8 pins it by
+redacting the same events on both sides of `advance()` — three named targets
+become none.
+
 ### Hosting it
 
 `server/cloud-init.yaml` is a Hetzner Cloud "Cloud config" that builds the box:
@@ -846,9 +883,10 @@ godot --headless --script res://test/test_fd_net.gd
 # The in-game rules sheet: sections present, and its numbers match CardStats.
 godot --headless --script res://test/test_rules_panel.gd
 
-# Multiplayer end-to-end: start the server first, then either of these.
+# Multiplayer end-to-end: start the server first, then any of these.
 godot --headless --script res://test/test_fd_server.gd -- port=8910
 godot --headless --script res://test/test_fd_rejoin.gd -- port=8910
+godot --headless --script res://test/test_fd_resync.gd -- port=8910
 
 # Face-up AI: 800 matches per matchup, headless on FURules.
 godot --headless --script res://test/bench_faceup.gd
