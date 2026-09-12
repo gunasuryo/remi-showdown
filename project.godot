@@ -14,7 +14,7 @@ config/name="Remi Showdown"
 run/main_scene="res://Scene/mode_select.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.1", "Mobile")
-config/icon="res://icon.png"
+config/icon="res://Asset/Icon/icon_512.png"
 
 [autoload]
 

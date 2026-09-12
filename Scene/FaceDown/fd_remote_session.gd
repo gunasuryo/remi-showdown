@@ -135,6 +135,11 @@ func _receive(msg: Dictionary) -> void:
 			GameState.room_code = code
 			GameState.seat_token = token
 			GameState.player_suit = my_side
+			# To disk, not just to memory: Android kills a backgrounded app
+			# whenever it likes, and a token that only lived in RAM died with
+			# it - leaving the player locked out of a match still waiting on
+			# them. This is the only moment the token is known.
+			GameState.save_prefs()
 			room_ready.emit(code, my_side)
 			if bool(msg.get("rejoined", false)):
 				notice.emit("Rejoined room %s" % code)

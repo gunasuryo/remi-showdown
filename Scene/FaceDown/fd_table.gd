@@ -403,6 +403,9 @@ func _on_again_btn_pressed() -> void:
 			session.leave()
 		GameState.room_code = ""
 		GameState.seat_token = ""
+		# The seat is genuinely gone, so clear it on disk too rather than
+		# leaving a dead token to be offered at the next lobby.
+		GameState.save_prefs()
 		get_tree().change_scene_to_file(LOBBY_SCENE)
 		return
 	get_tree().reload_current_scene()

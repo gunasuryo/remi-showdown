@@ -25,7 +25,11 @@ var _editing_server: bool = false
 
 func _ready() -> void:
 	SafeArea.bind($UI/Root)
-	$UI/Root/CodeEdit.text = ""
+	# A seat is still held somewhere: put its code in the box so getting back in
+	# is one tap. Nobody memorises a room code they only ever read aloud once,
+	# and JOIN with this code now carries the token that reclaims the seat.
+	var can_rejoin: bool = GameState.seat_token != "" and GameState.room_code != ""
+	$UI/Root/CodeEdit.text = GameState.room_code if can_rejoin else ""
 	_show_server(false)
 
 	# Coming back from a failed match: say why before they try again, and open
@@ -34,6 +38,8 @@ func _ready() -> void:
 		_say(GameState.last_error, C_BAD)
 		_show_server(true)
 		GameState.last_error = ""
+	elif can_rejoin:
+		_say("Tap JOIN to return to room %s, or create a new one." % GameState.room_code, C_OK)
 	else:
 		_say("Create a room and read the code out, or type a friend's.", C_OK)
 
@@ -90,11 +96,19 @@ func _enter(action: String, code: String) -> void:
 	if _editing_server and not _commit_server():
 		return
 	GameState.opponent = GameState.Opponent.ONLINE
+	# The token is what buys a dropped player their own seat back, so it must
+	# survive the trip through this screen when - and only when - they are
+	# heading for the SAME room. Clearing it unconditionally is what made a host
+	# unable to return to their own match: the board then asked to join as a
+	# stranger, the server saw a seat that was not free, and answered "that room
+	# is full" while the other player sat waiting for a move.
+	#
+	# Creating always means a fresh seat, and so does joining some other code.
+	if action == "create" or code != GameState.room_code:
+		GameState.seat_token = ""
 	GameState.room_action = action
 	GameState.room_code = code
-	# A fresh room means a fresh seat: an old token would ask the server for a
-	# seat in a match that is over.
-	GameState.seat_token = ""
+	GameState.save_prefs()
 	get_tree().change_scene_to_file(BOARD)
 
 func _on_create_btn_pressed() -> void:

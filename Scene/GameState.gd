@@ -67,6 +67,19 @@ func load_prefs() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(PREFS_PATH) != OK:
 		return
+
+	# The seat, before the address checks below - those can bail out early, and
+	# losing the seat because a server address looked stale would be the exact
+	# bug this is here to prevent.
+	#
+	# On a phone the ordinary way to "disconnect" is for Android to kill the app
+	# in the background, which takes the token with it if it only ever lived in
+	# memory. Rejoining is then impossible however carefully the code is typed,
+	# because the token is the only thing that proves the seat is yours. The
+	# server ignores a token that does not match, so a stale one costs nothing.
+	seat_token = str(cfg.get_value("online", "seat_token", ""))
+	room_code = str(cfg.get_value("online", "room_code", ""))
+
 	var saved: String = str(cfg.get_value("online", "server_url", ""))
 	if saved == "":
 		return
@@ -96,6 +109,8 @@ func save_prefs() -> void:
 	# Stamped so a later build with a different default knows this value is
 	# stale rather than deliberate.
 	cfg.set_value("online", "shipped_default", DEFAULT_SERVER_URL)
+	cfg.set_value("online", "seat_token", seat_token)
+	cfg.set_value("online", "room_code", room_code)
 	cfg.save(PREFS_PATH)
 
 # Forget the saved address and go back to what this build ships with. The lobby
