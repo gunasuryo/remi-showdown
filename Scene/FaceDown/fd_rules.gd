@@ -456,8 +456,14 @@ static func scaled(state: FDState, raw: int) -> int:
 static func _apply_hit(state: FDState, actor: FDCard, target: FDCard, raw: int, verb: String, events: Array) -> void:
 	var dmg: int = scaled(state, raw)
 	var res := target.take_hit(dmg)
+	# `slot` is the lane the blow lands in. `whiff` and `decoy_hit` have always
+	# carried it; `hit` did not, which left the board unable to say WHERE a
+	# landed attack went without resolving the target id - and that id is
+	# redacted to HIDDEN for an unrevealed enemy. The lane itself is not secret:
+	# it is the column the player is watching.
 	events.append({
 		"t": "hit", "actor": actor.id, "target": target.id, "verb": verb,
+		"slot": state.slot_of(target),
 		"damage": dmg, "absorbed": res.absorbed, "hp_lost": res.hp_lost,
 	})
 	if res.died:

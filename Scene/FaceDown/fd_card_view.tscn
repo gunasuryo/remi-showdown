@@ -1,24 +1,15 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Scene/FaceDown/fd_card_view.gd" id="1_fdcv"]
 
-[sub_resource type="StyleBoxFlat" id="SB_top"]
-bg_color = Color(0.04, 0.05, 0.08, 0.72)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-content_margin_left = 4.0
-content_margin_top = 2.0
-content_margin_right = 4.0
-content_margin_bottom = 3.0
-
 [sub_resource type="StyleBoxFlat" id="SB_bot"]
-bg_color = Color(0.04, 0.05, 0.08, 0.78)
+bg_color = Color(0.04, 0.05, 0.08, 0.8)
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 content_margin_left = 5.0
-content_margin_top = 3.0
+content_margin_top = 2.0
 content_margin_right = 5.0
-content_margin_bottom = 4.0
+content_margin_bottom = 3.0
 
 [node name="FDCardView" type="PanelContainer"]
 custom_minimum_size = Vector2(168, 244)
@@ -51,42 +42,24 @@ mouse_filter = 2
 theme_override_constants/separation = 0
 
 [node name="Expose" type="ColorRect" parent="M/V"]
-custom_minimum_size = Vector2(0, 5)
+custom_minimum_size = Vector2(0, 4)
 mouse_filter = 2
 color = Color(0.3, 0.62, 0.42, 1)
 
-[node name="Top" type="PanelContainer" parent="M/V"]
-mouse_filter = 2
-theme_override_styles/panel = SubResource("SB_top")
-
-[node name="TV" type="VBoxContainer" parent="M/V/Top"]
-mouse_filter = 2
-theme_override_constants/separation = 0
-
-[node name="SlotLabel" type="Label" parent="M/V/Top/TV"]
+[node name="StatLabel" type="Label" parent="M/V"]
+custom_minimum_size = Vector2(0, 15)
 mouse_filter = 2
 theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.6, 0.65, 0.72, 1)
-horizontal_alignment = 1
-text = "slot"
-
-[node name="NameLabel" type="Label" parent="M/V/Top/TV"]
-mouse_filter = 2
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
-text = "face down"
-
-[node name="StatLabel" type="Label" parent="M/V/Top/TV"]
-mouse_filter = 2
-theme_override_font_sizes/font_size = 11
-theme_override_colors/font_color = Color(0.72, 0.78, 0.86, 1)
+theme_override_colors/font_color = Color(0.82, 0.87, 0.94, 1)
+theme_override_colors/font_outline_color = Color(0.03, 0.04, 0.06, 1)
+theme_override_constants/outline_size = 5
 horizontal_alignment = 1
 text = ""
 
 [node name="Glyph" type="Label" parent="M/V"]
 mouse_filter = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 48
+theme_override_font_sizes/font_size = 44
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "?"
@@ -101,11 +74,11 @@ theme_override_styles/panel = SubResource("SB_bot")
 
 [node name="BV" type="VBoxContainer" parent="M/V/Bot"]
 mouse_filter = 2
-theme_override_constants/separation = 1
+theme_override_constants/separation = 0
 
 [node name="RallyLabel" type="Label" parent="M/V/Bot/BV"]
 mouse_filter = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(1, 0.84, 0.31, 1)
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -113,7 +86,7 @@ text = ""
 
 [node name="TrickLabel" type="Label" parent="M/V/Bot/BV"]
 mouse_filter = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.79, 0.51, 0.85, 1)
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -121,22 +94,35 @@ text = ""
 
 [node name="ShieldLabel" type="Label" parent="M/V/Bot/BV"]
 mouse_filter = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.4, 0.82, 1, 1)
 horizontal_alignment = 1
 text = ""
 
+[node name="NameLabel" type="Label" parent="M/V/Bot/BV"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+text = "face down"
+
 [node name="HPBar" type="ProgressBar" parent="M/V/Bot/BV"]
-custom_minimum_size = Vector2(0, 9)
+custom_minimum_size = Vector2(0, 7)
 mouse_filter = 2
 show_percentage = false
 value = 100.0
 
 [node name="HPLabel" type="Label" parent="M/V/Bot/BV"]
 mouse_filter = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.93, 0.95, 0.97, 1)
 horizontal_alignment = 1
 text = "0 / 0"
+
+[node name="SlotLabel" type="Label" parent="M/V/Bot/BV"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 9
+theme_override_colors/font_color = Color(0.55, 0.6, 0.68, 1)
+horizontal_alignment = 1
+text = "slot"
 
 [connection signal="gui_input" from="." to="." method="_on_gui_input"]

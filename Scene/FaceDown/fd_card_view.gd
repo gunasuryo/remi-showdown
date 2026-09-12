@@ -24,20 +24,16 @@ const C_BORDER   := Color(0.28, 0.31, 0.38)
 const C_SELECTED := Color(1.00, 0.84, 0.31)
 const C_TARGET   := Color(0.35, 0.80, 0.95)
 
-# A gold outline alone was easy to lose against five cards of similar size, so
-# the selected card also lifts: its background warms towards the outline colour
-# and its name gets a caret. Three cues rather than one, because which card you
-# are about to spend is the single most important thing on the board.
-const C_SELECTED_BG := Color(0.20, 0.17, 0.09)
-# The name band of the selected card is filled solid, which is the cue that
-# survives being one of five cards at phone size. A thin outline does not.
-const C_SELECTED_BAND := Color(1.00, 0.84, 0.31)
-const C_SELECTED_BAND_TEXT := Color(0.12, 0.10, 0.03)
-const C_STAT := Color(0.72, 0.78, 0.86)
+# A gold outline alone is easy to lose among five cards of similar size, so the
+# selected card also warms its background, turns its name and stats gold, and
+# takes a caret. It used to fill a solid gold band behind the name - that band
+# was part of the header block that covered the card face, and went with it.
+const C_SELECTED_BG := Color(0.24, 0.20, 0.10)
+const C_STAT := Color(0.82, 0.87, 0.94)
 # A card that has spent its turn. Dimming alone was easy to miss across five
-# cards, so it also gets a muted band and a tick on the name.
-const C_ACTED_BAND := Color(0.13, 0.14, 0.17, 0.92)
+# cards, so the name also takes a tick.
 const ACTED_MARK := "✓ "
+const C_ACTED_TEXT := Color(0.55, 0.58, 0.64)
 # The line art is pure white and fights the dark UI head-on at phone size.
 const ART_TINT := Color(0.90, 0.92, 0.95)
 
@@ -47,9 +43,8 @@ const ART_TINT := Color(0.90, 0.92, 0.95)
 const C_MARK_SHIELD := Color(0.40, 0.82, 1.00)
 const C_MARK_RALLY := Color(1.00, 0.84, 0.31)
 const C_MARK_TEND := Color(0.52, 0.85, 0.55)
-const C_BAND_IDLE := Color(0.04, 0.05, 0.08, 0.72)
 const SELECT_MARK := "▸ "
-const BORDER_SELECTED := 4
+const BORDER_SELECTED := 5
 const BORDER_TARGET := 3
 const BORDER_IDLE := 1
 
@@ -71,7 +66,18 @@ const C_SEEN_BY_FOE := Color(0.95, 0.62, 0.20)
 var slot: int = -1
 
 var _panel_sb: StyleBoxFlat = null
-var _top_sb: StyleBoxFlat = null
+var _lunge_tween: Tween = null
+# The lunge is an offset applied ON TOP of wherever the row has sorted this
+# card, re-read every frame - not a tween from a position captured up front.
+# A captured position is wrong exactly when it matters: on the frame a round
+# begins the row has just been rebuilt and has not sorted yet, so every card
+# still reads (0, 0), and a lunge started there parked the card at the far left
+# of the row for the rest of the round. Re-reading also absorbs a re-sort that
+# lands mid-lunge instead of fighting it.
+var _lunge_offset: Vector2 = Vector2.ZERO
+var _lunge_base: Vector2 = Vector2.ZERO
+var _lunge_applied: Vector2 = Vector2.ZERO
+var _lunging: bool = false
 var _hp_bg_sb: StyleBoxFlat = null
 var _hp_fill_sb: StyleBoxFlat = null
 
@@ -85,19 +91,6 @@ func _ensure_styles() -> void:
 	_panel_sb.set_corner_radius_all(6)
 	_panel_sb.set_content_margin_all(0)
 	add_theme_stylebox_override("panel", _panel_sb)
-
-	# Also per instance, and for the same reason as the panel: the SB_top in
-	# the .tscn is one resource shared by all ten views, so recolouring it for
-	# the selected card would recolour every card.
-	_top_sb = StyleBoxFlat.new()
-	_top_sb.bg_color = C_BAND_IDLE
-	_top_sb.corner_radius_top_left = 5
-	_top_sb.corner_radius_top_right = 5
-	_top_sb.content_margin_left = 4.0
-	_top_sb.content_margin_top = 2.0
-	_top_sb.content_margin_right = 4.0
-	_top_sb.content_margin_bottom = 3.0
-	$M/V/Top.add_theme_stylebox_override("panel", _top_sb)
 
 	_hp_bg_sb = StyleBoxFlat.new()
 	_hp_bg_sb.bg_color = Color(0.04, 0.05, 0.07, 0.85)
@@ -125,13 +118,13 @@ func render(d: Dictionary) -> void:
 	_ensure_styles()
 
 	var art: TextureRect = $Art
-	var slot_label: Label = $M/V/Top/TV/SlotLabel
-	var name_label: Label = $M/V/Top/TV/NameLabel
+	var slot_label: Label = $M/V/Bot/BV/SlotLabel
+	var name_label: Label = $M/V/Bot/BV/NameLabel
 	var glyph: Label = $M/V/Glyph
 	var bar: ProgressBar = $M/V/Bot/BV/HPBar
 	var hp_label: Label = $M/V/Bot/BV/HPLabel
 	var shield_label: Label = $M/V/Bot/BV/ShieldLabel
-	var stat_label: Label = $M/V/Top/TV/StatLabel
+	var stat_label: Label = $M/V/StatLabel
 	var preview: Label = $Preview
 	var rally_label: Label = $M/V/Bot/BV/RallyLabel
 	var trick_label: Label = $M/V/Bot/BV/TrickLabel
@@ -242,24 +235,18 @@ func render(d: Dictionary) -> void:
 	var is_selected: bool = d.get("selected", false)
 	var has_acted: bool = d.get("acted", false)
 	if is_selected:
-		_top_sb.bg_color = C_SELECTED_BAND
-	elif has_acted:
-		_top_sb.bg_color = C_ACTED_BAND
-	else:
-		_top_sb.bg_color = C_BAND_IDLE
-	if is_selected:
 		_set_border(C_SELECTED, BORDER_SELECTED)
 		_panel_sb.bg_color = C_SELECTED_BG
-		# The whole name band goes gold, so everything sitting on it has to go
-		# dark or it vanishes - the stat line did exactly that.
-		name_label.add_theme_color_override("font_color", C_SELECTED_BAND_TEXT)
-		slot_label.add_theme_color_override("font_color", C_SELECTED_BAND_TEXT)
-		stat_label.add_theme_color_override("font_color", C_SELECTED_BAND_TEXT)
+		# Name and stats go gold to match the border; both sit directly on the
+		# art now, so they are tinted rather than reversed out of a fill.
+		name_label.add_theme_color_override("font_color", C_SELECTED)
+		stat_label.add_theme_color_override("font_color", C_SELECTED)
 		name_label.text = SELECT_MARK + name_label.text
 	else:
 		stat_label.add_theme_color_override("font_color", C_STAT)
 		if has_acted:
 			name_label.text = ACTED_MARK + name_label.text
+			name_label.add_theme_color_override("font_color", C_ACTED_TEXT)
 		if d.get("targetable", false):
 			_set_border(C_TARGET, BORDER_TARGET)
 		else:
@@ -281,6 +268,54 @@ static func stat_line(card_name: String) -> String:
 	if skill <= 0:
 		return "%d atk  ·  %s" % [atk, word]
 	return "%d atk  ·  %s %d" % [atk, word, skill]
+
+# A short shove toward whatever this card is acting on, and back.
+#
+# The card sits in an HBoxContainer, which owns its position and reassigns it
+# on every sort. That is survivable because a Tween writes an ABSOLUTE position
+# each frame: a sort mid-flight costs one frame, not the animation. The return
+# leg targets the position the container gave us, so the card always lands back
+# where the layout wants it even if it re-sorted along the way.
+#
+# Any in-flight lunge is killed first - a card can be shoved twice in quick
+# succession (a rallied skill resolves lane by lane), and two tweens fighting
+# over `position` would leave it parked off-centre.
+func lunge(offset: Vector2, out_time: float = 0.10) -> void:
+	if _lunge_tween != null and _lunge_tween.is_valid():
+		_lunge_tween.kill()
+	# Give the sorted position back before measuring it again.
+	position -= _lunge_offset
+	_lunge_base = position
+	_lunge_offset = Vector2.ZERO
+	_lunge_applied = position
+	_lunging = true
+
+	_lunge_tween = create_tween()
+	_lunge_tween.tween_method(_set_lunge_offset, Vector2.ZERO, offset, out_time) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Slower coming back than going out, so it reads as a strike rather than a
+	# twitch.
+	_lunge_tween.tween_method(_set_lunge_offset, offset, Vector2.ZERO, out_time * 1.9) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	_lunge_tween.finished.connect(_end_lunge)
+
+func _set_lunge_offset(v: Vector2) -> void:
+	_lunge_offset = v
+
+func _end_lunge() -> void:
+	_lunging = false
+	_lunge_offset = Vector2.ZERO
+	position = _lunge_base
+
+func _process(_delta: float) -> void:
+	if not _lunging:
+		return
+	# Anything that moved us other than this lunge is the row re-sorting, and
+	# the row is the authority on where the card lives - so adopt it.
+	if position != _lunge_applied:
+		_lunge_base = position
+	_lunge_applied = _lunge_base + _lunge_offset
+	position = _lunge_applied
 
 # A number floating up off the card: damage taken, healing, shield absorbed.
 # The board renders state; without this it never renders CHANGE, and every hit
@@ -364,8 +399,11 @@ func _set_stats_visible(on: bool) -> void:
 	if not on:
 		$M/V/Bot/BV/RallyLabel.visible = false
 		$M/V/Bot/BV/TrickLabel.visible = false
-	# With nothing to report, the bottom band would just be an empty bar.
-	$M/V/Bot.visible = on
+	# The bottom band itself ALWAYS stays: it carries the slot number and the
+	# hidden/seen state, which a face-down card needs more than a revealed one
+	# does. Hiding the whole band when there were no stats to show took the slot
+	# label with it and left the enemy row as five unlabelled rectangles.
+	$M/V/Bot.visible = true
 
 func _set_border(c: Color, width: int) -> void:
 	_panel_sb.border_color = c

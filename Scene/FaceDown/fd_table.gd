@@ -133,8 +133,11 @@ func _on_synced(events: Array) -> void:
 			% [state.round_no, _side_name(state.leader)])
 
 	_log_events(events)
-	_play_feedback(events)
 	_refresh()
+	# After _refresh(), not before: it re-renders the rows, and a container sort
+	# lands on top of a tween that has only just started.
+	_play_feedback(events)
+	_play_lunge(events)
 
 # Picks up the session's state and re-lays the board if the round or the width
 # moved. Also re-drafts, because a new round clears both rows.
@@ -728,6 +731,13 @@ const C_POP_SHIELD := Color(0.45, 0.78, 1.0)
 const C_FLASH_HIT := Color(1.0, 0.25, 0.2, 0.5)
 const C_FLASH_GOOD := Color(0.4, 1.0, 0.5, 0.35)
 
+# How far a card shoves toward what it is acting on. Small on purpose: the row
+# must stay readable as a row, so this is a lean, not a charge.
+const LUNGE_SINGLE: float = 15.0
+# A rallied skill covers three lanes, so the card commits further toward the
+# middle of them - the extra distance is what makes a spread read as a spread.
+const LUNGE_SPREAD: float = 30.0
+
 # The board used to render only state, so a hit was a silent jump in a health
 # bar and everything you learned came from reading the log. This replays the
 # same event stream as a burst of numbers over the cards involved.
@@ -788,6 +798,86 @@ func _play_feedback(events: Array) -> void:
 				Sound.cue("reveal")
 			"king_plus_armed":
 				Sound.cue("commit")
+
+# Shoves the acting card toward whatever it just acted on.
+#
+# Driven off the same event stream as the damage numbers rather than off the
+# submitted action, so it works identically for the opponent's turn - online,
+# the board never sees the action they chose, only what it did.
+func _play_lunge(events: Array) -> void:
+	# One lunge per card per batch. A rallied skill emits its `skill` event and
+	# then a `hit` per lane it covers; without this the last lane's narrow
+	# single-target shove would replace the wide spread lunge already running.
+	var done := {}
+	for ev in events:
+		match str(ev.get("t", "")):
+			"skill":
+				var actor: FDCard = state.card_by_id(int(ev.get("actor", -1)))
+				if actor == null:
+					continue
+				# Ace, Queen and King work on their own row; Jack and Joker on
+				# the enemy's. Asking the rules keeps this from drifting if a
+				# card's targeting ever changes.
+				var side: int = state.opponent(actor.side) 					if FDRules.skill_targets_enemies(actor) else actor.side
+				var spread: bool = int(ev.get("spread", 0)) != FDRules.Spread.SINGLE
+				done[int(ev.actor)] = true
+				_shove(int(ev.actor), side, ev.get("lanes", []), spread)
+			"hit", "decoy_hit", "whiff":
+				# An attack names a lane on the enemy row. `hit` also fires for a
+				# Jack's shoot, which the skill event above has already handled -
+				# lunging twice is what the kill-in-flight guard is for.
+				var a: FDCard = state.card_by_id(int(ev.get("actor", -1)))
+				if a == null or done.has(int(ev.actor)):
+					continue
+				done[int(ev.actor)] = true
+				_shove(int(ev.actor), state.opponent(a.side), [int(ev.get("slot", -1))], false)
+
+func _shove(actor_id: int, target_side: int, lanes: Array, spread: bool) -> void:
+	var from_view: FDCardView = _view_of(actor_id)
+	if from_view == null or lanes.is_empty():
+		return
+	var row: Array = _player_views if target_side == player_side else _enemy_views
+
+	# Aim at the middle of everything the action touches, so a three-lane skill
+	# leans toward the centre of the three rather than at whichever lane the
+	# engine happened to list first.
+	var centre := Vector2.ZERO
+	var counted := 0
+	for lane in lanes:
+		var i: int = int(lane)
+		if i < 0 or i >= row.size():
+			continue
+		centre += row[i].get_global_rect().get_center()
+		counted += 1
+	if counted == 0:
+		return
+	centre /= float(counted)
+
+	var actor: FDCard = state.card_by_id(actor_id)
+	if actor == null:
+		return
+	var from_rect: Rect2 = from_view.get_global_rect()
+	var delta: Vector2 = centre - from_rect.get_center()
+
+	var dir: Vector2
+	if target_side == actor.side:
+		# Same row - a rally, heal or shield. Sideways toward the ally is the
+		# only direction that carries any meaning here.
+		dir = delta
+	else:
+		# Across the board. The honest vector is nearly vertical whichever lane
+		# is struck, because the rows sit much further apart than the lanes are
+		# wide, so a reach would look all but identical to a straight hit.
+		# Quantise it instead: dead ahead into your own lane, or 45 degrees
+		# toward whichever side you reach across to.
+		var sideways: float = 0.0
+		if absf(delta.x) > from_rect.size.x * 0.25:
+			sideways = signf(delta.x)
+		dir = Vector2(sideways, signf(delta.y))
+
+	if dir.length() < 0.01:
+		return
+	from_view.lunge(dir.normalized() * (LUNGE_SPREAD if spread else LUNGE_SINGLE))
 
 # The view standing over a card right now, or null when that card is not on
 # the board or is hidden inside the enemy row.
