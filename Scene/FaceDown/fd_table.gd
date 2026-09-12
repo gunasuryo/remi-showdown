@@ -65,6 +65,9 @@ var ai_side: int = FDState.RED
 var rng := RandomNumberGenerator.new()
 var blog: BattleLog = null
 
+# The in-battle menu: audio settings, and the way out.
+var _menu: GameMenu = null
+
 # The board is rebuilt when the round or the board width changes. Tracked rather
 # than driven by a round-start call, because in an online match nobody tells the
 # client a round began - it just receives a snapshot that looks different.
@@ -91,6 +94,11 @@ var _player_views: Array = []
 
 func _ready() -> void:
 	SafeArea.bind($UI/Root)
+	# The battle is what has a soundtrack; the menus are quiet.
+	Audio.play_music()
+	_menu = GameMenu.new()
+	_menu.build($UI/Root)
+	_menu.exit_requested.connect(_on_exit_requested)
 	rng.randomize()
 	blog = BattleLog.new($UI/Root/LogPanel/LogScroll/LogText, $UI/Root/LogPanel/LogScroll, LOG_HEADER)
 
@@ -328,10 +336,13 @@ func _notification(what: int) -> void:
 		_on_menu_btn_pressed()
 
 func _on_rules_btn_pressed() -> void:
-	$UI/Root/RulesPanel.visible = not $UI/Root/RulesPanel.visible
+	var showing: bool = not $UI/Root/RulesPanel.visible
+	$UI/Root/RulesPanel.visible = showing
+	Audio.play_cue("book_open" if showing else "book_close")
 
 func _on_close_rules_btn_pressed() -> void:
 	$UI/Root/RulesPanel.visible = false
+	Audio.play_cue("book_close")
 
 # Leaving is one tap from the board and cannot be undone - online it abandons a
 # live match on someone else's screen - so it asks first. The Android Back
@@ -341,6 +352,17 @@ func _on_menu_btn_pressed() -> void:
 	if state != null and state.phase == FDState.Phase.GAME_OVER:
 		_leave_now()
 		return
+	# Opens the menu rather than the confirm. Leaving is still one of the things
+	# in it, and still asks - see _on_exit_requested, which hands the asking to
+	# this board's own panel because its wording knows about online matches.
+	if _menu == null:
+		_show_confirm()
+		return
+	Audio.play_cue("click")
+	_menu.toggle()
+
+func _on_exit_requested() -> void:
+	_menu.hide_panel()
 	_show_confirm()
 
 func _show_confirm() -> void:

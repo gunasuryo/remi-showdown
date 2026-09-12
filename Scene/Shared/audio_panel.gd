@@ -56,8 +56,12 @@ func build(parent: Control) -> void:
 	title.add_theme_font_size_override("font_size", 26)
 	v.add_child(title)
 
-	_add_slider(v, "Music", Audio.music_volume, Audio.set_music_volume)
-	_add_slider(v, "Sound", Audio.sfx_volume, Audio.set_sfx_volume)
+	# Resolved here rather than named at compile time - see Sound.
+	var a := Sound.node()
+	if a == null:
+		return
+	_add_slider(v, "Music", a.music_volume, a.set_music_volume)
+	_add_slider(v, "Sound", a.sfx_volume, a.set_sfx_volume)
 
 	var close := Button.new()
 	close.text = "Close"
@@ -89,7 +93,10 @@ func _add_slider(box: VBoxContainer, label_text: String, initial: float,
 		apply.call(value)
 		caption.text = "%s   %d%%" % [label_text, int(round(value * 100.0))])
 	# One write when the drag ends, not one per frame while it moves.
-	slider.drag_ended.connect(func(_changed: bool): Audio.save_prefs())
+	slider.drag_ended.connect(func(_changed: bool):
+		var a := Sound.node()
+		if a != null:
+			a.save_prefs())
 
 func show_panel() -> void:
 	if _panel != null:
@@ -98,7 +105,9 @@ func show_panel() -> void:
 func hide_panel() -> void:
 	if _panel != null:
 		_panel.visible = false
-		Audio.save_prefs()
+		var a := Sound.node()
+		if a != null:
+			a.save_prefs()
 
 func is_open() -> bool:
 	return _panel != null and _panel.visible

@@ -739,23 +739,53 @@ missing is a snapshot that drops what those queries refuse, the way
 ## Audio
 
 ```
-Asset/Audio/Music/      the soundtrack
-Asset/Audio/SFX/        empty - see below
-default_bus_layout.tres Master, with Music and SFX feeding it
-Scene/Shared/audio.gd   the `Audio` autoload: owns the player, the volumes
+Asset/Audio/Music/           the soundtrack
+Asset/Audio/SFX/CasinoSFX/   Kenney Casino Audio - cards, chips, dice
+Asset/Audio/SFX/RPGSFX/      Kenney RPG Audio - impacts, cloth, books
+default_bus_layout.tres      Master, with Music and SFX feeding it
+Scene/Shared/audio.gd        the `Audio` autoload: player, cues, volumes
+Scene/Shared/sound.gd        `Sound` - how non-scene scripts reach the autoload
 Scene/Shared/audio_panel.gd  the volume sliders, built in code
+Scene/Shared/game_menu.gd    the in-battle menu: Audio, Exit Game, Resume
 ```
+
+**Cues are named for what happened, never for a file.** Call sites say
+`Sound.cue("attack")`; `Audio.CUES` maps that to one or more takes and picks at
+random. Several entries list three or four because Kenney numbers its variants
+for exactly this reason — the same sound on every attack of a forty-action match
+turns into a machine gun. Single-take cues get a small pitch wobble instead.
+
+**Sound is a redaction surface too.** An enemy Ace shielding must not be
+*audible* any more than it may be visible, so the cast cues sit inside the same
+`cast_is_visible()` gate as the ghost and the floating word — the same `if`, so
+they cannot drift apart. That makes five surfaces a hidden status can escape
+through: the log, the animation, the marker, the aiming preview, and now audio.
+
+**`Sound` exists because an autoload is not an identifier everywhere.** The
+main-loop script of a `--script` run compiles before autoloads register, and so
+does every `class_name` script it names — `test_fu_board.gd` calls
+`FUStage.cast_is_visible()`, so the moment `fu_stage.gd` said `Audio.play_cue()`
+the whole test stopped building. Scene scripts like `table2.gd` are fine, the
+same way they have always referred to `GameState`. Everything else resolves
+`/root/Audio` by path at call time.
 
 Three things here are load-bearing, and all three fail *silently* when they are
 wrong — no crash, just a game that is quiet, or that stops being musical after
 one play.
 
 **The player is on an autoload, not in a scene.** `change_scene_to_file()` frees
-the scene it is leaving, so an `AudioStreamPlayer` placed on `suit_select` stops
-dead on the way to `mode_select` and starts again from the top on the way to the
-board. Every screen restarting the same track is the usual symptom of putting
-the player in the scene. `Audio` sits outside the tree being swapped, so the
-track just keeps playing across the whole flow.
+the scene it is leaving, so an `AudioStreamPlayer` placed on a board would be
+destroyed and rebuilt by every scene change, restarting the track each time.
+`Audio` sits outside the tree being swapped, so a track survives whatever the
+game does to its scenes.
+
+**The autoload owns the player; it does not decide when to play.** Music belongs
+to a battle, so the menus are silent: `table2` and `fd_table` call
+`Audio.play_music()` in `_ready()`, and `mode_select` calls `Audio.stop_music()`
+in its own. Stopping on ARRIVAL at the hub rather than on departure from a board
+is deliberate — there are several ways out of a match (the Menu button, the
+Android back gesture, the game-over screen) and they all land at `mode_select`,
+so one call covers every one of them including any added later.
 
 **Volume is applied to buses, not to players.** A player's `volume_db` moves one
 sound; a bus moves everything routed to it, including sounds that do not exist
@@ -771,6 +801,11 @@ then falls off a cliff.
 re-import away from a track that plays once and stops, so `Audio.play_music()`
 also forces `stream.loop = true` at runtime. Belt and braces, deliberately:
 that makes looping a property of the game rather than of a sidecar file.
+
+The Menu button on either board opens the in-battle menu rather than leaving.
+Face-down always asked before leaving; **face-up did not** - one tap on
+`< Menu` ended the match, and the Android back gesture routed into the same
+call. Leaving is now a choice inside the menu, and both modes confirm.
 
 `test/test_audio.gd` covers all of it — the buses exist by name, the track
 loads and loops, the player is actually playing, a lower slider is a lower bus

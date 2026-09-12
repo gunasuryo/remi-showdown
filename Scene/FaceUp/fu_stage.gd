@@ -129,8 +129,8 @@ func _build_menu() -> void:
 	_attack_btn = _make_button("Attack")
 	_skill_btn = _make_button("Skill")
 
-	_attack_btn.pressed.connect(func(): attack_chosen.emit())
-	_skill_btn.pressed.connect(func(): skill_chosen.emit())
+	_attack_btn.pressed.connect(func(): Sound.cue("click"); attack_chosen.emit())
+	_skill_btn.pressed.connect(func(): Sound.cue("click"); skill_chosen.emit())
 
 	# Backing out of a target choice. Right-click does the same thing and is
 	# quicker, but there is no right button on a phone, so the mechanic cannot
@@ -153,7 +153,7 @@ func _build_menu() -> void:
 	_cancel_btn.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_cancel_btn.visible = false
 	_ui.add_child(_cancel_btn)
-	_cancel_btn.pressed.connect(func(): cancel_chosen.emit())
+	_cancel_btn.pressed.connect(func(): Sound.cue("cancel"); cancel_chosen.emit())
 
 func _make_button(text: String) -> Button:
 	var b := Button.new()
@@ -223,6 +223,7 @@ func round_card(n: int, leader: String) -> void:
 	if not enabled or _round_label == null:
 		return
 	_round_label.text = "ROUND %d\n%s goes first" % [n, leader]
+	Sound.cue("round")
 	if _skip:
 		_round_label.modulate.a = 0.0
 		return
@@ -309,8 +310,13 @@ func play(events: Array, views: Dictionary, state: FUState, viewer: int) -> void
 			"hit":
 				await _hit(e, views, state)
 				_pop_hit(e, views)
+			"death":
+				Sound.cue("death")
+			"game_over":
+				Sound.cue("match_end")
 			"heal":
 				if int(e.amount) > 0:
+					Sound.cue("heal")
 					await _approach(e.actor, e.target, views)
 					_pop(views, int(e.target), "+%d" % int(e.amount), HEAL_TINT)
 			"shield":
@@ -319,30 +325,36 @@ func play(events: Array, views: Dictionary, state: FUState, viewer: int) -> void
 				# the SAME gate as the ghost, so there is one decision here and
 				# not two that could drift apart.
 				if cast_is_visible(e, state, viewer, int(e.target)):
+					Sound.cue("shield")
 					_pop(views, int(e.target), "SHIELDED", SHIELD_TINT)
 					await _ghost(e.actor, e.target, views, SHIELD_TINT)
 			"rally":
 				if cast_is_visible(e, state, viewer, int(e.target)):
+					Sound.cue("rally")
 					_pop(views, int(e.target), "RALLIED", RALLY_TINT)
 					await _ghost(e.actor, e.target, views, RALLY_TINT)
 			"double_rally":
 				for id in e.targets:
 					if cast_is_visible(e, state, viewer, int(id)):
+						Sound.cue("rally")
 						_pop(views, int(id), "RALLIED", RALLY_TINT)
 						await _ghost(e.actor, id, views, RALLY_TINT)
 			"trick":
 				# Visible when it is OUR trap being set; invisible when one is
 				# being set on us, which is the whole of the mechanic.
 				if cast_is_visible(e, state, viewer, int(e.target)):
+					Sound.cue("trick")
 					_pop(views, int(e.target), "TRICKED", TRICK_TINT)
 					await _ghost(e.actor, e.target, views, TRICK_TINT)
 			"reveal":
 				# A hidden status coming out is the moment the caster is most
 				# worth showing, because until now the other side had no idea it
 				# was there. Never gated: the reveal IS the secret ending.
+				Sound.cue("reveal")
 				_pop(views, int(e.card), _reveal_word(str(e.what)), _reveal_tint(str(e.what)))
 				await _reveal_caster(e, views, state)
 			"trick_sprung":
+				Sound.cue("trick_sprung")
 				_pop(views, int(e.card), "TRICKED", TRICK_TINT)
 				await _ghost(e.by, e.card, views, TRICK_TINT)
 			"rally_breaks_trick":
@@ -367,8 +379,10 @@ func _pop(views: Dictionary, card_id: int, text: String, tint: Color,
 # A Jack's shoot travels; a plain attack leans in where it stands.
 func _hit(e: Dictionary, views: Dictionary, state: FUState) -> void:
 	if str(e.verb) == "shoots":
+		Sound.cue("shoot")
 		await _approach(e.actor, e.target, views)
 	else:
+		Sound.cue("attack")
 		await _lunge(e.actor, e.target, views)
 
 # The caster behind a status that has just gone public.

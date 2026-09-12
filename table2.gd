@@ -46,6 +46,9 @@ var _busy: bool = false
 # The round the banner last announced, so it goes up once per pass.
 var _shown_round: int = 0
 
+# The in-battle menu: audio settings, and the way out.
+var _menu: GameMenu = null
+
 # A beat before the AI moves, so its turn does not appear to happen in the same
 # instant the player's did. It used to be a full second, which reads as thinking
 # for the first few turns and as waiting for the rest of the match - and the
@@ -94,6 +97,8 @@ func _log(bbcode: String) -> void:
 
 func _ready():
 	SafeArea.bind($UI/Root)
+	# The battle is what has a soundtrack; the menus are quiet.
+	Audio.play_music()
 	$Camera2D.reserve = HUD_RESERVE
 	rng.randomize()
 	player_suit = GameState.player_suit
@@ -108,6 +113,11 @@ func _ready():
 	_stage.attack_chosen.connect(func(): _on_attack(0))
 	_stage.skill_chosen.connect(_on_skill)
 	_stage.cancel_chosen.connect(_cancel_targeting)
+
+	_menu = GameMenu.new()
+	_menu.build($UI/Root)
+	_menu.exit_requested.connect(_on_exit_requested)
+	_menu.exit_confirmed.connect(_on_exit_confirmed)
 
 	_render(FURules.start(state))
 
@@ -495,6 +505,11 @@ func _submit(action: Dictionary) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton) or not event.pressed:
 		return
+	# While the menu or the volume sliders are up, the board is not listening.
+	# A click that misses a button there is a click on a dimmed-out game, not an
+	# instruction to skip an animation.
+	if _menu != null and _menu.is_open():
+		return
 	if event.button_index == MOUSE_BUTTON_RIGHT:
 		# Right-click backs out of a target choice, and does nothing else ever.
 		# A right-click that quietly did something during the AI's turn would be
@@ -634,6 +649,8 @@ func _on_target(card: Card):
 		return
 
 	_hide_all_buttons()
+	# The chip going down: this press is what spends the turn.
+	Audio.play_cue("commit")
 	_submit(action)
 
 # ─── Button Visibility ───────────────────────
@@ -647,7 +664,22 @@ func _hide_all_buttons():
 
 # ─── Navigation ──────────────────────────────
 
+# The Menu button opens the MENU. It used to change scene on the spot: one tap
+# on `< Menu` ended the match, with no confirmation and nothing to undo it, and
+# the Android back gesture routed into the same call - which is easy to trigger
+# by accident at the edge of a phone screen. Face-down had asked first for a
+# long time; this side never did.
 func _on_menu_btn_pressed() -> void:
+	if _menu == null:
+		get_tree().change_scene_to_file(MODE_SELECT_SCENE)
+		return
+	Audio.play_cue("click")
+	_menu.toggle()
+
+func _on_exit_requested() -> void:
+	_menu.ask_confirm("Your progress in this match will be lost.")
+
+func _on_exit_confirmed() -> void:
 	get_tree().change_scene_to_file(MODE_SELECT_SCENE)
 
 # Android's Back gesture, which would otherwise close the app outright.

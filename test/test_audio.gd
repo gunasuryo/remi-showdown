@@ -52,9 +52,26 @@ func _initialize() -> void:
 			break
 	_ok(player != null, "there is a music player on the Music bus")
 	if player != null:
-		_ok(player.playing, "music started on its own at boot")
+		# The menus are quiet. The autoload owns the player but decides nothing
+		# about when it runs, so booting must leave it silent - this asserted
+		# the opposite while the music started in Audio._ready().
+		_ok(not player.playing, "boot alone does NOT start the music")
+
+		# A battle starting is what starts it, and leaving for the hub is what
+		# stops it. Instantiating the scenes is enough: both act in _ready().
+		var board := (load("res://Scene/Table/table_2.tscn") as PackedScene).instantiate()
+		root.add_child(board)
+		_ok(player.playing, "opening the face-up board starts the music")
 		_ok(player.stream != null and bool(player.stream.loop),
 			"the stream it is playing loops")
+		root.remove_child(board)
+		board.free()
+
+		var hub := (load("res://Scene/mode_select.tscn") as PackedScene).instantiate()
+		root.add_child(hub)
+		_ok(not player.playing, "returning to mode_select stops it")
+		root.remove_child(hub)
+		hub.free()
 
 	# ── Volume maps the way a slider expects ────────────────────────────
 	var idx := AudioServer.get_bus_index("Music")
@@ -68,6 +85,27 @@ func _initialize() -> void:
 	_ok(not is_equal_approx(mid, 0.5),
 		"volume is converted to dB, not assigned raw")
 	audio.set_music_volume(0.7)
+
+	# ── Every cue resolves to a file that exists ────────────────────────
+	#
+	# A mistyped path in CUES is the worst kind of silent failure: load() returns
+	# null, play_sfx() shrugs, and the action is simply quiet. Nothing in a
+	# playthrough distinguishes that from a sound that was never added.
+	var cue_files: int = 0
+	for cue in audio.CUES:
+		var paths: Array = audio.CUES[cue]
+		_ok(not paths.is_empty(), "cue '%s' lists at least one file" % cue)
+		for path in paths:
+			cue_files += 1
+			if not ResourceLoader.exists(path):
+				_ok(false, "cue '%s' points at a missing file: %s" % [cue, path])
+	_ok(cue_files > 0, "the cue table is not empty")
+	# Cheap of sounds aside, the named cues the code actually asks for have to be
+	# in the table - play_cue() only warns, so a rename would go unnoticed.
+	for needed in ["attack", "shoot", "death", "shield", "heal", "rally", "trick",
+			"trick_sprung", "reveal", "round", "match_end", "commit", "click",
+			"cancel", "book_open", "book_close"]:
+		_ok(audio.CUES.has(needed), "cue '%s' exists" % needed)
 
 	# ── The scenes that hang controls off all this ──────────────────────
 	_scene("res://Scene/mode_select.tscn", [

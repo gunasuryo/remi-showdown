@@ -11,6 +11,7 @@ const FACE_DOWN_SCENE: String = "res://Scene/FaceDown/fd_table.tscn"
 const SUIT_SELECT_SCENE: String = "res://Scene/suit_select.tscn"
 const LOBBY_SCENE: String = "res://Scene/lobby.tscn"
 const SUIT_SCENE: String = "res://Scene/suit_select.tscn"
+const CREDITS_SCENE: String = "res://Scene/credits.tscn"
 
 # The pressed state alone is a subtle shade change, so the active choice
 # also gets the accent colour used for highlights elsewhere.
@@ -30,6 +31,9 @@ var _audio_panel: AudioPanel = null
 
 func _ready() -> void:
 	SafeArea.bind($UI/Root)
+	# Every way out of a match lands here, so this is the one place that has to
+	# remember to put the battle music away.
+	Audio.stop_music()
 	_audio_panel = AudioPanel.new()
 	_audio_panel.build($UI/Root)
 	# Arriving here means we are not in an online match; the board reads this to
@@ -104,6 +108,9 @@ func _on_face_down_btn_pressed() -> void:
 
 func _on_audio_btn_pressed() -> void:
 	_audio_panel.toggle()
+
+func _on_credits_btn_pressed() -> void:
+	get_tree().change_scene_to_file(CREDITS_SCENE)
 
 func _on_back_btn_pressed() -> void:
 	get_tree().quit()

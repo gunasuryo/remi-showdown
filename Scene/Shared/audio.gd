@@ -60,7 +60,10 @@ func _ready() -> void:
 		_sfx.append(p)
 
 	load_prefs()
-	play_music()
+	# Deliberately NOT starting the music here. The autoload owns the player and
+	# the volume; WHEN a track plays is a decision about the game, and the menus
+	# are supposed to be quiet. The boards call play_music() as they open and
+	# mode_select calls stop_music() as it does - see the note on stop_music().
 
 # ── Music ─────────────────────────────────────────────────────────────────
 
@@ -81,6 +84,11 @@ func play_music(path: String = MUSIC_TRACK) -> void:
 	_music.stream = stream
 	_music.play()
 
+# Called by mode_select rather than by each board on the way out, because there
+# are several ways to leave a match - the Menu button, the Android back gesture,
+# and the game-over screen - and they all land here. Stopping on arrival at the
+# hub covers every one of them, including any added later; stopping on departure
+# would have to be remembered at each exit.
 func stop_music() -> void:
 	if _music != null:
 		_music.stop()
@@ -91,9 +99,76 @@ func _on_music_finished() -> void:
 
 # ── SFX ───────────────────────────────────────────────────────────────────
 
-# Round-robin over the voice pool. Nothing calls this yet - there are no sound
-# effects in the project - but the SFX bus and its slider are wired, so adding
-# one is `Audio.play_sfx(preload(...))` and nothing else.
+# Cues are named for WHAT HAPPENED, never for a file. Call sites say
+# `Audio.play_cue("attack")`, so re-cutting the audio is an edit to this table
+# and nothing else - and a caller cannot quietly go on playing a sound that no
+# longer suits the action it belongs to.
+#
+# Several entries list more than one file. Kenney numbers its variants for
+# exactly this reason: the same sound on every attack of a forty-action match
+# turns into a machine gun, and rotating three takes is the cheapest fix there
+# is. _pick() chooses at random, and single-file cues get a small pitch wobble
+# instead so they do not sound stamped out either.
+const CASINO := "res://Asset/Audio/SFX/CasinoSFX/"
+const RPG := "res://Asset/Audio/SFX/RPGSFX/"
+
+const CUES := {
+	# Combat. A plain attack is a blunt impact; a Jack's shoot travels, so it
+	# gets the blade instead and reads as a different action with eyes shut.
+	"attack": [RPG + "chop.ogg"],
+	"shoot": [RPG + "knifeSlice.ogg", RPG + "knifeSlice2.ogg"],
+	"death": [CASINO + "card-place-1.ogg", CASINO + "card-place-2.ogg",
+		CASINO + "card-place-3.ogg", CASINO + "card-place-4.ogg"],
+
+	# Skills, each with its own texture so a player can tell what landed
+	# without reading the log.
+	"shield": [RPG + "metalLatch.ogg", RPG + "metalPot1.ogg"],
+	"heal": [CASINO + "chips-stack-1.ogg", CASINO + "chips-stack-3.ogg",
+		CASINO + "chips-stack-5.ogg"],
+	"rally": [CASINO + "card-fan-1.ogg", CASINO + "card-fan-2.ogg"],
+	"trick": [RPG + "creak1.ogg", RPG + "creak2.ogg", RPG + "creak3.ogg"],
+	"trick_sprung": [RPG + "dropLeather.ogg"],
+
+	# A hidden status coming out. Deliberately not the same as the cast: the
+	# cast is a secret being kept, the reveal is one being broken.
+	"reveal": [CASINO + "card-slide-1.ogg", CASINO + "card-slide-4.ogg",
+		CASINO + "card-slide-7.ogg"],
+
+	# Structure.
+	"round": [CASINO + "card-shuffle.ogg"],
+	"match_end": [CASINO + "chips-collide-1.ogg", CASINO + "chips-collide-3.ogg"],
+
+	# UI. A chip going down for committing to an action - it is a bet - and a
+	# lighter click for everything else.
+	"commit": [CASINO + "chip-lay-1.ogg", CASINO + "chip-lay-2.ogg",
+		CASINO + "chip-lay-3.ogg"],
+	"click": [RPG + "metalClick.ogg"],
+	"cancel": [CASINO + "card-shove-1.ogg", CASINO + "card-shove-3.ogg"],
+	"book_open": [RPG + "bookOpen.ogg"],
+	"book_close": [RPG + "bookClose.ogg"],
+}
+
+var _cue_cache := {}
+
+# Plays one take of a named cue. Unknown names warn rather than fail silently:
+# a mistyped cue is otherwise indistinguishable from a sound that is simply
+# quiet, and the whole point of the table is that the names are checkable.
+func play_cue(cue: String) -> void:
+	if not CUES.has(cue):
+		push_warning("Audio: no cue named %s" % cue)
+		return
+	var paths: Array = CUES[cue]
+	if paths.is_empty():
+		return
+	var path: String = paths[randi() % paths.size()]
+	if not _cue_cache.has(path):
+		_cue_cache[path] = load(path)
+	# One take gets a wobble so repeats are not identical; several takes are
+	# already varied, so they are left alone.
+	var pitch: float = 1.0 if paths.size() > 1 else randf_range(0.94, 1.06)
+	play_sfx(_cue_cache[path], pitch)
+
+# Round-robin over the voice pool.
 func play_sfx(stream: AudioStream, pitch: float = 1.0) -> void:
 	if stream == null or _sfx.is_empty():
 		return
