@@ -116,6 +116,11 @@ const CUES := {
 	# Combat. A plain attack is a blunt impact; a Jack's shoot travels, so it
 	# gets the blade instead and reads as a different action with eyes shut.
 	"attack": [RPG + "chop.ogg"],
+	# The half-damage reach into a neighbouring lane. A softer, duller landing
+	# than `attack`, so the two are distinguishable with eyes shut - which is the
+	# only reason to have a separate cue for it at all. FACE-DOWN ONLY: face-up
+	# locks an attack to the lane it faces, so nothing there can fire this.
+	"attack_weak": [RPG + "bookPlace1.ogg", RPG + "bookPlace3.ogg"],
 	"shoot": [RPG + "knifeSlice.ogg", RPG + "knifeSlice2.ogg"],
 	"death": [CASINO + "card-place-1.ogg", CASINO + "card-place-2.ogg",
 		CASINO + "card-place-3.ogg", CASINO + "card-place-4.ogg"],
@@ -125,7 +130,9 @@ const CUES := {
 	"shield": [RPG + "metalLatch.ogg", RPG + "metalPot1.ogg"],
 	"heal": [CASINO + "chips-stack-1.ogg", CASINO + "chips-stack-3.ogg",
 		CASINO + "chips-stack-5.ogg"],
-	"rally": [CASINO + "card-fan-1.ogg", CASINO + "card-fan-2.ogg"],
+	# Cloth rather than a card flourish. The fan moved to positioning, where
+	# a whole row really is being fanned out and the sound is literal.
+	"rally": [RPG + "clothBelt2.ogg"],
 	"trick": [RPG + "creak1.ogg", RPG + "creak2.ogg", RPG + "creak3.ogg"],
 	"trick_sprung": [RPG + "dropLeather.ogg"],
 
@@ -134,7 +141,11 @@ const CUES := {
 	"reveal": [CASINO + "card-slide-1.ogg", CASINO + "card-slide-4.ogg",
 		CASINO + "card-slide-7.ogg"],
 
-	# Structure.
+	# Structure. Face-down deals a fresh hidden row every round, so it has two
+	# beats face-up has no equivalent for: committing an arrangement, and the
+	# moment the rows go face down again.
+	"lock_in": [CASINO + "card-fan-1.ogg"],
+	"positioning": [CASINO + "card-fan-2.ogg"],
 	"round": [CASINO + "card-shuffle.ogg"],
 	"match_end": [CASINO + "chips-collide-1.ogg", CASINO + "chips-collide-3.ogg"],
 

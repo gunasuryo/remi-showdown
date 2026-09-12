@@ -100,11 +100,12 @@ func _initialize() -> void:
 			if not ResourceLoader.exists(path):
 				_ok(false, "cue '%s' points at a missing file: %s" % [cue, path])
 	_ok(cue_files > 0, "the cue table is not empty")
-	# Cheap of sounds aside, the named cues the code actually asks for have to be
-	# in the table - play_cue() only warns, so a rename would go unnoticed.
-	for needed in ["attack", "shoot", "death", "shield", "heal", "rally", "trick",
+	# The cues the code actually asks for by name must be in the table.
+	# play_cue() only warns on an unknown name, so a rename would otherwise go
+	# unnoticed until someone played far enough to miss the sound.
+	for needed in ["attack", "attack_weak", "shoot", "death", "shield", "heal", "rally", "trick",
 			"trick_sprung", "reveal", "round", "match_end", "commit", "click",
-			"cancel", "book_open", "book_close"]:
+			"cancel", "book_open", "book_close", "lock_in", "positioning"]:
 		_ok(audio.CUES.has(needed), "cue '%s' exists" % needed)
 
 	# ── The scenes that hang controls off all this ──────────────────────

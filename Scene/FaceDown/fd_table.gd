@@ -127,6 +127,8 @@ func _on_synced(events: Array) -> void:
 		return
 
 	if _shown_round != was_round and was_round != -1:
+		# Everything goes back face down and both rows are dealt again.
+		Sound.cue("positioning")
 		blog.add("[color=#ffd54f]— Round %d — %s leads —[/color]"
 			% [state.round_no, _side_name(state.leader)])
 
@@ -200,6 +202,7 @@ func _rebuild_rows() -> void:
 		_player_views.append(mine)
 
 func _on_finished(w: int) -> void:
+	Sound.cue("match_end")
 	var msg: String = "Draw"
 	if w == player_side:
 		msg = "You win!"
@@ -274,13 +277,17 @@ func _swap(slot: int) -> void:
 	_refresh()
 
 func _on_random_btn_pressed() -> void:
+	Sound.cue("click")
 	if state == null or state.placed[player_side]:
 		return
 	_draft = FDRules.auto_place(state, player_side, rng)
 	_swap_pick = -1
 	_refresh()
 
+# The row is committed and goes face down. card-fan-1 is the literal sound of
+# what just happened on screen.
 func _on_lock_btn_pressed() -> void:
+	Sound.cue("lock_in")
 	if state == null or state.phase != FDState.Phase.POSITIONING:
 		return
 	if state.placed[player_side]:
@@ -289,6 +296,7 @@ func _on_lock_btn_pressed() -> void:
 	session.submit_placement(_draft)
 
 func _on_attack_btn_pressed() -> void:
+	Sound.cue("click")
 	var card: FDCard = state.card_by_id(_sel_id)
 	if card == null:
 		return
@@ -302,6 +310,7 @@ func _on_attack_btn_pressed() -> void:
 	_refresh()
 
 func _on_skill_btn_pressed() -> void:
+	Sound.cue("click")
 	var card: FDCard = state.card_by_id(_sel_id)
 	if card == null:
 		return
@@ -313,6 +322,7 @@ func _on_skill_btn_pressed() -> void:
 	_refresh()
 
 func _on_cancel_btn_pressed() -> void:
+	Sound.cue("cancel")
 	_sel_id = FDCard.NONE
 	_targeting = false
 	_targeting_kind = ""
@@ -721,10 +731,29 @@ const C_FLASH_GOOD := Color(0.4, 1.0, 0.5, 0.35)
 # The board used to render only state, so a hit was a silent jump in a health
 # bar and everything you learned came from reading the log. This replays the
 # same event stream as a burst of numbers over the cards involved.
+# Sound and picture come off the same event pass, so a cue cannot end up
+# describing something the board did not draw.
+#
+# Unlike face-up, NOTHING here is gated on who may see it: in this mode the
+# actions themselves are public - a card is revealed the moment it acts - and it
+# is the card's IDENTITY that is hidden, which no sound gives away.
 func _play_feedback(events: Array) -> void:
 	for ev in events:
 		match ev.get("t", ""):
 			"hit":
+				# The verb separates a full-strength swing at the lane in front
+				# from the half-damage reach into a neighbour, and a Jack's shot
+				# from both. Face-up has no sideways attack, so `attack_weak`
+				# only ever fires on this side.
+				match str(ev.get("verb", "attacks")):
+					"shoots":
+						Sound.cue("shoot")
+					"reaches across at":
+						Sound.cue("attack_weak")
+					_:
+						Sound.cue("attack")
+				if int(ev.absorbed) > 0:
+					Sound.cue("shield")
 				var v: FDCardView = _view_of(int(ev.target))
 				if v == null:
 					continue
@@ -733,15 +762,32 @@ func _play_feedback(events: Array) -> void:
 					v.flash(C_FLASH_HIT)
 				elif int(ev.absorbed) > 0:
 					v.pop("-%d" % int(ev.absorbed), C_POP_ABSORB)
+			"death":
+				Sound.cue("death")
+			"decoy_hit", "whiff":
+				# A blow that found a corpse or an empty lane. The dull version
+				# of a hit, and the whole point of the decoy, so it needs to
+				# sound like nothing happened.
+				Sound.cue("cancel")
 			"heal":
+				Sound.cue("heal")
 				var vh: FDCardView = _view_of(int(ev.target))
 				if vh != null:
 					vh.pop("+%d" % int(ev.amount), C_POP_HEAL)
 					vh.flash(C_FLASH_GOOD)
 			"shield":
+				Sound.cue("shield")
 				var vs: FDCardView = _view_of(int(ev.target))
 				if vs != null:
 					vs.pop("+%d" % int(ev.amount), C_POP_SHIELD)
+			"rally", "nullify_cleared_by_king":
+				Sound.cue("rally")
+			"nullify", "trick_strip_rally":
+				Sound.cue("trick")
+			"reveal":
+				Sound.cue("reveal")
+			"king_plus_armed":
+				Sound.cue("commit")
 
 # The view standing over a card right now, or null when that card is not on
 # the board or is hidden inside the enemy row.
