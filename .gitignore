@@ -36,3 +36,6 @@ export_presets.cfg
 # A backup of the pre-purge history. Never part of the project, and its
 # loose objects include files over GitHub's 100 MB limit.
 .git.old/
+
+*.mp3
+*.ogg

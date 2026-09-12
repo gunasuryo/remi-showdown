@@ -736,6 +736,49 @@ missing is a snapshot that drops what those queries refuse, the way
 
 ---
 
+## Audio
+
+```
+Asset/Audio/Music/      the soundtrack
+Asset/Audio/SFX/        empty - see below
+default_bus_layout.tres Master, with Music and SFX feeding it
+Scene/Shared/audio.gd   the `Audio` autoload: owns the player, the volumes
+Scene/Shared/audio_panel.gd  the volume sliders, built in code
+```
+
+Three things here are load-bearing, and all three fail *silently* when they are
+wrong — no crash, just a game that is quiet, or that stops being musical after
+one play.
+
+**The player is on an autoload, not in a scene.** `change_scene_to_file()` frees
+the scene it is leaving, so an `AudioStreamPlayer` placed on `suit_select` stops
+dead on the way to `mode_select` and starts again from the top on the way to the
+board. Every screen restarting the same track is the usual symptom of putting
+the player in the scene. `Audio` sits outside the tree being swapped, so the
+track just keeps playing across the whole flow.
+
+**Volume is applied to buses, not to players.** A player's `volume_db` moves one
+sound; a bus moves everything routed to it, including sounds that do not exist
+yet. That is the entire reason `default_bus_layout.tres` exists — and note that
+Godot only loads it from the path in `project.godot`, so the file alone is not
+enough. The sliders are linear and hearing is not, so `Audio._apply` converts
+through `linear_to_db`: assigning the slider value to `volume_db` directly is
+the classic way to get a control that does nothing for most of its travel and
+then falls off a cliff.
+
+**Looping is an import setting**, the Loop tick in the import dock, stored in
+`Asset/Audio/Music/*.import` and **false by default**. It is one careless
+re-import away from a track that plays once and stops, so `Audio.play_music()`
+also forces `stream.loop = true` at runtime. Belt and braces, deliberately:
+that makes looping a property of the game rather than of a sidecar file.
+
+`test/test_audio.gd` covers all of it — the buses exist by name, the track
+loads and loops, the player is actually playing, a lower slider is a lower bus
+volume and zero is genuinely silent, and the two scenes that hang controls off
+this load with those controls present.
+
+---
+
 ## Tests and benchmarks
 
 ```bash
@@ -758,6 +801,9 @@ godot --headless --script res://test/sweep_ai.gd -- blunder
 godot --headless --script res://test/analyze_fd.gd
 # ...and the self-rally A/B: is arming rally+ worth two King actions?
 godot --headless --script res://test/analyze_fd.gd -- rally
+
+# Audio: buses, the loop flag, and the scenes that hang controls off them.
+godot --headless --script res://test/test_audio.gd
 
 # Multiplayer: wire format and redaction (no server needed).
 godot --headless --script res://test/test_fd_net.gd

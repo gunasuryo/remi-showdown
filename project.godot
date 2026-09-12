@@ -19,6 +19,11 @@ config/icon="res://icon.png"
 [autoload]
 
 GameState="*res://Scene/GameState.gd"
+Audio="*res://Scene/Shared/audio.gd"
+
+[audio]
+
+buses/default_bus_layout="res://default_bus_layout.tres"
 
 [display]
 

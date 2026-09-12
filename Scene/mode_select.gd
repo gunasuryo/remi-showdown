@@ -23,8 +23,15 @@ const DIFF_BLURB := {
 	GameState.Difficulty.HARD: "The same scorer playing its best move every time, on weights tuned against three different opponents. It rallies its Jack, shields to deny kills, and heals only to stop one. Beats a pure attacker 97 times in 100.",
 }
 
+# The volume sliders, built over this screen on demand. mode_select is the hub
+# both boards return to, which makes it the one screen a player can always get
+# back to in order to turn the music down.
+var _audio_panel: AudioPanel = null
+
 func _ready() -> void:
 	SafeArea.bind($UI/Root)
+	_audio_panel = AudioPanel.new()
+	_audio_panel.build($UI/Root)
 	# Arriving here means we are not in an online match; the board reads this to
 	# decide which session to build.
 	GameState.opponent = GameState.Opponent.AI
@@ -94,6 +101,9 @@ func _on_face_up_btn_pressed() -> void:
 func _on_face_down_btn_pressed() -> void:
 	GameState.mode = GameState.Mode.FACE_DOWN
 	get_tree().change_scene_to_file(SUIT_SCENE)
+
+func _on_audio_btn_pressed() -> void:
+	_audio_panel.toggle()
 
 func _on_back_btn_pressed() -> void:
 	get_tree().quit()
