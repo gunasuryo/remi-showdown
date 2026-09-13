@@ -209,7 +209,8 @@ func render(d: Dictionary) -> void:
 		rally_label.visible = rally != ""
 		trick_label.visible = d.get("tricked", false)
 		# A trick now costs the skill AND half the attack, so say so.
-		trick_label.text = "TRICKED -50%"
+		var reduction: int = int((1.0 - CardStats.TRICK_ATTACK_MULT) * 100)
+		trick_label.text = "TRICKED -%d%%" % reduction
 
 	var texture: Texture2D = null
 	if show_art:

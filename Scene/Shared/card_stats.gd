@@ -49,9 +49,9 @@ const FACE_DOWN := 1
 # to derive better ones with - test/bench_faceup.gd measures policies against
 # each other, not stats - so tuning this table is still an open job.
 const STATS_FACEUP := {
-	"Ace":   {"hp": 60, "atk": 14, "skill": 30, "rallied": 25},  # skill = shield points granted
+	"Ace":   {"hp": 60, "atk": 16, "skill": 30, "rallied": 25},  # skill = shield points granted
 	"Jack":  {"hp": 45, "atk": 26, "skill": 20, "rallied": 17},  # skill = shoot damage
-	"Queen": {"hp": 55, "atk": 14, "skill": 30},                 # skill = heal amount
+	"Queen": {"hp": 55, "atk": 16, "skill": 25},                 # skill = heal amount
 	"King":  {"hp": 70, "atk": 20, "skill": 0},   # skill = rally, no numeric value
 	"Joker": {"hp": 65, "atk": 16, "skill": 0},   # skill = trick, no numeric value
 }
@@ -133,7 +133,7 @@ const ORDER := ["Ace", "Jack", "Queen", "King", "Joker"]
 # is the same bargain a hidden shield strikes with the attack that reveals it.
 # Denying the skill alone made the face-up trick worth almost nothing, because
 # the scorer mostly attacks and so mostly never sprang one.
-const TRICK_ATTACK_MULT := 0.5
+const TRICK_ATTACK_MULT := 0.75
 
 # FACE-DOWN ONLY. An attack there may hit its own lane or either neighbour, and
 # a neighbour costs this much of the damage. It is what gives an attack a
